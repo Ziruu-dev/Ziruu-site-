@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZIRUU — Créateur & Streamer</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,700;0,900;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple-deep: #0d0010;
+  --purple-dark: #150020;
+  --purple-mid: #3d0066;
+  --purple-bright: #8b00ff;
+  --purple-glow: #aa44ff;
+  --purple-light: #cc88ff;
+  --neon-green: #39ff14;
+  --neon-green-dim: #1aaa00;
+  --neon-green-glow: rgba(57,255,20,0.3);
+  --white: #f0e8ff;
+  --white-dim: rgba(240,232,255,0.6);
+  --card-bg: rgba(61,0,102,0.25);
+  --card-border: rgba(139,0,255,0.35);
+  --glass: rgba(13,0,16,0.7);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+html {
+scroll-behavior: smooth;
+font-size: 16px;
+background-color: #0d0010;
+}
+
+body {
+background-color: #0d0010;
+color: var(–white);
+font-family: ‘Exo 2’, sans-serif;
+overflow-x: hidden;
+cursor: none;
+min-height: 100vh;
+}
+
+/* Force dark bg on all sections */
+#hero, #about, #skills, #experience, #lives, #contact, section, .section-wrap {
+background: transparent;
+}
+
+button, a, input, textarea, label, select {
+cursor: pointer !important;
+}
+
+/* CUSTOM CURSOR */
+.cursor {
+width: 12px; height: 12px;
+background: var(–neon-green);
+border-radius: 50%;
+position: fixed;
+top: 0; left: 0;
+pointer-events: none;
+z-index: 9999;
+transition: transform 0.1s, opacity 0.2s;
+box-shadow: 0 0 12px var(–neon-green), 0 0 24px var(–neon-green-glow);
+mix-blend-mode: screen;
+}
+.cursor-ring {
+width: 36px; height: 36px;
+border: 1.5px solid var(–purple-glow);
+border-radius: 50%;
+position: fixed;
+top: 0; left: 0;
+pointer-events: none;
+z-index: 9998;
+transition: transform 0.18s cubic-bezier(.25,.46,.45,.94), width 0.2s, height 0.2s, opacity 0.2s;
+}
+
+/* NOISE OVERLAY */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 512 512’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.035’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 1;
+opacity: 0.6;
+}
+
+/* ANIMATED BG */
+.bg-layer {
+position: fixed;
+inset: 0;
+z-index: 0;
+overflow: hidden;
+background: linear-gradient(135deg, #0d0010 0%, #150020 40%, #0d0010 100%);
+}
+.bg-orb {
+position: absolute;
+border-radius: 50%;
+filter: blur(90px);
+opacity: 0.18;
+animation: orb-drift 18s ease-in-out infinite alternate;
+}
+.bg-orb-1 { width: 700px; height: 700px; background: var(–purple-bright); top: -200px; left: -150px; animation-duration: 20s; }
+.bg-orb-2 { width: 500px; height: 500px; background: var(–neon-green); top: 40%; right: -100px; opacity: 0.07; animation-duration: 15s; animation-delay: -5s; }
+.bg-orb-3 { width: 600px; height: 600px; background: #5500aa; bottom: -100px; left: 30%; animation-duration: 25s; animation-delay: -10s; }
+@keyframes orb-drift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px,60px) scale(1.1); } }
+
+/* GRID LINES */
+.bg-grid {
+position: fixed;
+inset: 0;
+z-index: 0;
+background-image:
+linear-gradient(rgba(139,0,255,0.05) 1px, transparent 1px),
+linear-gradient(90deg, rgba(139,0,255,0.05) 1px, transparent 1px);
+background-size: 60px 60px;
+}
+
+/* MAIN WRAP */
+main { position: relative; z-index: 2; }
+
+/* ======= NAV ======= */
+nav {
+position: fixed;
+top: 0; left: 0; right: 0;
+z-index: 100;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 18px 48px;
+background: linear-gradient(180deg, rgba(13,0,16,0.95) 0%, transparent 100%);
+backdrop-filter: blur(8px);
+border-bottom: 1px solid rgba(139,0,255,0.15);
+}
+.nav-logo {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.7rem;
+font-weight: 700;
+letter-spacing: 4px;
+background: linear-gradient(135deg, var(–purple-glow), var(–neon-green));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a {
+color: var(–white-dim);
+text-decoration: none;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.9rem;
+letter-spacing: 2px;
+font-weight: 600;
+text-transform: uppercase;
+transition: color 0.2s;
+position: relative;
+}
+.nav-links a::after {
+content: ‘’;
+position: absolute;
+bottom: -4px; left: 0;
+width: 0; height: 1px;
+background: var(–neon-green);
+transition: width 0.3s;
+}
+.nav-links a:hover { color: var(–neon-green); }
+.nav-links a:hover::after { width: 100%; }
+
+/* LANG TOGGLE */
+.lang-btn {
+background: none;
+border: 1.5px solid var(–purple-glow);
+color: var(–purple-light);
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.85rem;
+font-weight: 700;
+letter-spacing: 2px;
+padding: 6px 16px;
+border-radius: 4px;
+cursor: none;
+transition: all 0.25s;
+}
+.lang-btn:hover {
+background: var(–purple-bright);
+border-color: var(–purple-bright);
+color: #fff;
+box-shadow: 0 0 16px rgba(139,0,255,0.5);
+}
+
+/* ======= HERO ======= */
+#hero {
+min-height: 100vh;
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+overflow: hidden;
+padding: 120px 48px 80px;
+}
+
+.hero-content {
+display: flex;
+align-items: center;
+gap: 80px;
+max-width: 1100px;
+width: 100%;
+}
+
+.hero-avatar-wrap {
+flex-shrink: 0;
+position: relative;
+}
+.hero-avatar-ring {
+position: absolute;
+inset: -16px;
+border-radius: 50%;
+border: 2px solid transparent;
+background: linear-gradient(135deg, var(–purple-bright), var(–neon-green), var(–purple-bright)) border-box;
+-webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+-webkit-mask-composite: destination-out;
+mask-composite: exclude;
+animation: spin-slow 8s linear infinite;
+}
+.hero-avatar-ring-2 {
+position: absolute;
+inset: -30px;
+border-radius: 50%;
+border: 1px solid rgba(139,0,255,0.3);
+animation: spin-slow 14s linear infinite reverse;
+}
+@keyframes spin-slow { 100% { transform: rotate(360deg); } }
+
+.hero-avatar {
+width: 220px; height: 220px;
+border-radius: 50%;
+object-fit: cover;
+background: linear-gradient(135deg, #3d0066, #1a004d);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 6rem;
+position: relative;
+overflow: hidden;
+box-shadow: 0 0 60px rgba(139,0,255,0.4), 0 0 120px rgba(57,255,20,0.1);
+}
+.avatar-placeholder {
+width: 220px; height: 220px;
+border-radius: 50%;
+background: linear-gradient(135deg, #3d0066 0%, #1a004d 50%, #0d0020 100%);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 5.5rem;
+box-shadow: 0 0 60px rgba(139,0,255,0.4), 0 0 120px rgba(57,255,20,0.1);
+position: relative;
+z-index: 1;
+}
+
+.hero-glow-dot {
+position: absolute;
+width: 10px; height: 10px;
+background: var(–neon-green);
+border-radius: 50%;
+bottom: 12px; right: 12px;
+box-shadow: 0 0 10px var(–neon-green), 0 0 20px var(–neon-green);
+animation: pulse-glow 2s ease-in-out infinite;
+z-index: 2;
+}
+@keyframes pulse-glow { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.4); } }
+
+.hero-text { flex: 1; }
+.hero-eyebrow {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.78rem;
+color: var(–neon-green);
+letter-spacing: 4px;
+text-transform: uppercase;
+margin-bottom: 12px;
+opacity: 0;
+animation: fade-up 0.8s 0.3s forwards;
+}
+.hero-name {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: clamp(4rem, 9vw, 8rem);
+font-weight: 700;
+line-height: 0.9;
+letter-spacing: -2px;
+background: linear-gradient(135deg, #fff 0%, var(–purple-light) 40%, var(–neon-green) 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+opacity: 0;
+animation: fade-up 0.8s 0.5s forwards;
+}
+.hero-sub {
+font-size: 1.05rem;
+color: var(–white-dim);
+margin-top: 16px;
+max-width: 420px;
+line-height: 1.6;
+font-weight: 300;
+opacity: 0;
+animation: fade-up 0.8s 0.7s forwards;
+}
+.hero-sub em { color: var(–purple-light); font-style: normal; font-weight: 600; }
+.hero-cta {
+display: flex;
+gap: 16px;
+margin-top: 36px;
+opacity: 0;
+animation: fade-up 0.8s 0.9s forwards;
+}
+
+@keyframes fade-up {
+from { opacity: 0; transform: translateY(24px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* BUTTONS */
+.btn-primary {
+display: inline-flex;
+align-items: center;
+gap: 10px;
+padding: 14px 32px;
+background: linear-gradient(135deg, var(–purple-bright), #6600cc);
+color: #fff;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.95rem;
+font-weight: 700;
+letter-spacing: 2px;
+text-transform: uppercase;
+text-decoration: none;
+border: none;
+border-radius: 4px;
+cursor: none;
+position: relative;
+overflow: hidden;
+transition: transform 0.2s, box-shadow 0.2s;
+box-shadow: 0 0 20px rgba(139,0,255,0.4);
+clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.btn-primary::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+opacity: 0;
+transition: opacity 0.2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(139,0,255,0.7); }
+.btn-primary:hover::before { opacity: 1; }
+
+.btn-ghost {
+display: inline-flex;
+align-items: center;
+gap: 10px;
+padding: 13px 28px;
+background: transparent;
+color: var(–neon-green);
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.95rem;
+font-weight: 700;
+letter-spacing: 2px;
+text-transform: uppercase;
+text-decoration: none;
+border: 1.5px solid var(–neon-green);
+border-radius: 4px;
+cursor: none;
+transition: all 0.2s;
+clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+.btn-ghost:hover {
+background: rgba(57,255,20,0.1);
+box-shadow: 0 0 24px rgba(57,255,20,0.3);
+transform: translateY(-2px);
+}
+
+/* SCROLL INDICATOR */
+.scroll-indicator {
+position: absolute;
+bottom: 36px;
+left: 50%;
+transform: translateX(-50%);
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 8px;
+opacity: 0.5;
+animation: fade-up 1s 1.5s both;
+}
+.scroll-line {
+width: 1px;
+height: 48px;
+background: linear-gradient(180deg, transparent, var(–purple-glow));
+animation: scroll-pulse 2s ease-in-out infinite;
+}
+@keyframes scroll-pulse { 0%,100% { opacity: 0.3; transform: scaleY(0.8); } 50% { opacity: 1; transform: scaleY(1); } }
+.scroll-text {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.6rem;
+letter-spacing: 3px;
+color: var(–purple-glow);
+text-transform: uppercase;
+}
+
+/* DIVIDER */
+.section-divider {
+width: 100%;
+height: 1px;
+background: linear-gradient(90deg, transparent, var(–purple-mid), var(–neon-green-dim), var(–purple-mid), transparent);
+position: relative;
+}
+.section-divider::before {
+content: ‘’;
+position: absolute;
+left: 50%;
+top: -3px;
+transform: translateX(-50%);
+width: 6px; height: 6px;
+background: var(–neon-green);
+border-radius: 50%;
+box-shadow: 0 0 12px var(–neon-green);
+}
+
+/* SECTIONS COMMON */
+section {
+padding: 100px 48px;
+max-width: 1200px;
+margin: 0 auto;
+}
+.section-tag {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.72rem;
+color: var(–neon-green);
+letter-spacing: 5px;
+text-transform: uppercase;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.section-tag::before {
+content: ‘’;
+width: 24px; height: 1px;
+background: var(–neon-green);
+}
+.section-title {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: clamp(2.2rem, 5vw, 3.5rem);
+font-weight: 700;
+line-height: 1;
+margin-bottom: 48px;
+}
+.section-title span { color: var(–purple-glow); }
+
+/* REVEAL ANIMATIONS */
+.reveal {
+opacity: 0;
+transform: translateY(40px);
+transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+opacity: 1;
+transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+.reveal-delay-5 { transition-delay: 0.5s; }
+
+/* ======= ABOUT ======= */
+#about { position: relative; }
+.about-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 64px;
+align-items: center;
+}
+.about-text p {
+font-size: 1.05rem;
+line-height: 1.9;
+color: var(–white-dim);
+font-weight: 300;
+margin-bottom: 16px;
+}
+.about-text p strong { color: var(–white); font-weight: 600; }
+.about-text p .highlight { color: var(–neon-green); font-weight: 600; }
+
+.about-stats {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+}
+.stat-card {
+background: var(–card-bg);
+border: 1px solid var(–card-border);
+border-radius: 8px;
+padding: 28px 24px;
+position: relative;
+overflow: hidden;
+backdrop-filter: blur(10px);
+transition: transform 0.3s, box-shadow 0.3s;
+}
+.stat-card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0;
+width: 3px;
+height: 100%;
+background: linear-gradient(180deg, var(–purple-bright), var(–neon-green));
+}
+.stat-card:hover {
+transform: translateY(-4px);
+box-shadow: 0 12px 40px rgba(139,0,255,0.2);
+}
+.stat-number {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 2.8rem;
+font-weight: 700;
+background: linear-gradient(135deg, var(–purple-glow), var(–neon-green));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+line-height: 1;
+}
+.stat-label {
+font-size: 0.8rem;
+color: var(–white-dim);
+margin-top: 4px;
+letter-spacing: 1px;
+}
+
+/* ======= SKILLS ======= */
+#skills { position: relative; }
+.skills-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 20px;
+}
+.skill-card {
+background: var(–card-bg);
+border: 1px solid var(–card-border);
+border-radius: 10px;
+padding: 36px 24px;
+text-align: center;
+position: relative;
+overflow: hidden;
+backdrop-filter: blur(10px);
+cursor: default;
+transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.skill-card::after {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: linear-gradient(135deg, rgba(139,0,255,0.08), rgba(57,255,20,0.04));
+opacity: 0;
+transition: opacity 0.3s;
+}
+.skill-card:hover {
+transform: translateY(-6px) scale(1.02);
+border-color: var(–purple-glow);
+box-shadow: 0 16px 48px rgba(139,0,255,0.25), 0 0 0 1px rgba(139,0,255,0.2);
+}
+.skill-card:hover::after { opacity: 1; }
+.skill-icon {
+font-size: 2.6rem;
+margin-bottom: 16px;
+display: block;
+position: relative;
+z-index: 1;
+}
+.skill-name {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1rem;
+font-weight: 700;
+letter-spacing: 1.5px;
+color: var(–white);
+text-transform: uppercase;
+position: relative;
+z-index: 1;
+}
+.skill-bar-wrap {
+margin-top: 16px;
+height: 2px;
+background: rgba(139,0,255,0.2);
+border-radius: 2px;
+overflow: hidden;
+position: relative;
+z-index: 1;
+}
+.skill-bar {
+height: 100%;
+background: linear-gradient(90deg, var(–purple-bright), var(–neon-green));
+border-radius: 2px;
+transform: scaleX(0);
+transform-origin: left;
+transition: transform 1s 0.3s cubic-bezier(.25,.46,.45,.94);
+}
+.skill-card.visible .skill-bar { transform: scaleX(1); }
+
+/* ======= EXPERIENCE ======= */
+#experience { position: relative; }
+.timeline {
+position: relative;
+padding-left: 32px;
+}
+.timeline::before {
+content: ‘’;
+position: absolute;
+left: 0; top: 0; bottom: 0;
+width: 1px;
+background: linear-gradient(180deg, var(–purple-bright), var(–neon-green-dim), transparent);
+}
+.timeline-item {
+position: relative;
+margin-bottom: 48px;
+padding: 32px 36px;
+background: var(–card-bg);
+border: 1px solid var(–card-border);
+border-radius: 10px;
+backdrop-filter: blur(10px);
+transition: transform 0.3s, border-color 0.3s;
+}
+.timeline-item::before {
+content: ‘’;
+position: absolute;
+left: -40px; top: 50%;
+transform: translateY(-50%);
+width: 10px; height: 10px;
+background: var(–neon-green);
+border-radius: 50%;
+box-shadow: 0 0 16px var(–neon-green);
+}
+.timeline-item::after {
+content: ‘’;
+position: absolute;
+left: -32px; top: 50%;
+transform: translateY(-50%);
+width: 32px; height: 1px;
+background: linear-gradient(90deg, var(–neon-green), transparent);
+}
+.timeline-item:hover {
+transform: translateX(6px);
+border-color: var(–purple-glow);
+}
+.exp-icon { font-size: 2rem; margin-bottom: 12px; }
+.exp-title {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.3rem;
+font-weight: 700;
+color: var(–white);
+letter-spacing: 1px;
+margin-bottom: 8px;
+}
+.exp-desc {
+font-size: 0.95rem;
+color: var(–white-dim);
+line-height: 1.7;
+font-weight: 300;
+}
+.exp-tag {
+display: inline-block;
+margin-top: 14px;
+padding: 4px 14px;
+background: rgba(57,255,20,0.1);
+border: 1px solid rgba(57,255,20,0.3);
+border-radius: 20px;
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.72rem;
+color: var(–neon-green);
+letter-spacing: 2px;
+}
+
+/* ======= LIVES ======= */
+#lives { position: relative; }
+
+/* LIVE STATUS HERO CARD */
+.live-status-hero {
+position: relative;
+border-radius: 16px;
+overflow: hidden;
+margin-bottom: 32px;
+padding: 40px;
+background: rgba(20,0,30,0.8);
+border: 1px solid rgba(139,0,255,0.3);
+backdrop-filter: blur(16px);
+transition: border-color 0.5s, box-shadow 0.5s;
+}
+.live-status-hero.is-offline {
+border-color: rgba(200,30,30,0.4);
+box-shadow: 0 0 40px rgba(200,0,0,0.08), inset 0 0 60px rgba(180,0,0,0.04);
+}
+.live-status-hero.is-online {
+border-color: rgba(57,255,20,0.5);
+box-shadow: 0 0 60px rgba(57,255,20,0.12), inset 0 0 60px rgba(57,255,20,0.04);
+}
+.live-status-hero::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 3px;
+transition: background 0.5s;
+}
+.live-status-hero.is-offline::before {
+background: linear-gradient(90deg, transparent, #cc1111, #ff4444, #cc1111, transparent);
+}
+.live-status-hero.is-online::before {
+background: linear-gradient(90deg, transparent, var(–neon-green-dim), var(–neon-green), var(–neon-green-dim), transparent);
+box-shadow: 0 0 16px var(–neon-green);
+}
+
+/* SCAN LINE EFFECT */
+.live-status-hero::after {
+content: ‘’;
+position: absolute;
+inset: 0;
+background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
+pointer-events: none;
+}
+
+.live-top-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 28px;
+flex-wrap: wrap;
+gap: 16px;
+}
+
+/* BADGE STATUT */
+.live-status-badge {
+display: inline-flex;
+align-items: center;
+gap: 10px;
+padding: 8px 20px;
+border-radius: 40px;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.85rem;
+font-weight: 700;
+letter-spacing: 3px;
+text-transform: uppercase;
+transition: all 0.5s;
+}
+.live-status-badge.is-offline {
+background: rgba(200,20,20,0.15);
+border: 1px solid rgba(220,40,40,0.4);
+color: #ff6060;
+}
+.live-status-badge.is-online {
+background: rgba(57,255,20,0.12);
+border: 1px solid rgba(57,255,20,0.5);
+color: var(–neon-green);
+box-shadow: 0 0 20px rgba(57,255,20,0.15);
+}
+.status-dot {
+width: 8px; height: 8px;
+border-radius: 50%;
+flex-shrink: 0;
+transition: background 0.5s, box-shadow 0.5s;
+}
+.is-offline .status-dot {
+background: #ff3333;
+box-shadow: 0 0 8px #ff3333;
+animation: pulse-offline 2.5s ease-in-out infinite;
+}
+.is-online .status-dot {
+background: var(–neon-green);
+box-shadow: 0 0 12px var(–neon-green);
+animation: pulse-online 1.5s ease-in-out infinite;
+}
+@keyframes pulse-offline { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+@keyframes pulse-online  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.5)} }
+
+/* TOGGLE SWITCH */
+.live-toggle-wrap {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.toggle-label {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.7rem;
+letter-spacing: 2px;
+color: var(–white-dim);
+text-transform: uppercase;
+}
+.toggle-switch {
+position: relative;
+width: 56px; height: 28px;
+cursor: none;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+position: absolute;
+inset: 0;
+border-radius: 28px;
+background: rgba(200,20,20,0.25);
+border: 1px solid rgba(220,40,40,0.4);
+transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+.toggle-switch input:checked ~ .toggle-track {
+background: rgba(57,255,20,0.2);
+border-color: rgba(57,255,20,0.5);
+box-shadow: 0 0 16px rgba(57,255,20,0.2);
+}
+.toggle-knob {
+position: absolute;
+top: 4px; left: 4px;
+width: 20px; height: 20px;
+border-radius: 50%;
+background: #ff4444;
+transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), background 0.4s, box-shadow 0.4s;
+box-shadow: 0 0 8px rgba(255,50,50,0.5);
+}
+.toggle-switch input:checked ~ .toggle-track ~ .toggle-knob,
+.toggle-switch input:checked + .toggle-track + .toggle-knob {
+transform: translateX(28px);
+background: var(–neon-green);
+box-shadow: 0 0 12px var(–neon-green);
+}
+
+/* Trick: knob after track in DOM */
+.toggle-knob-after {
+position: absolute;
+top: 4px; left: 4px;
+width: 20px; height: 20px;
+border-radius: 50%;
+background: #ff4444;
+transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), background 0.4s, box-shadow 0.4s;
+box-shadow: 0 0 8px rgba(255,50,50,0.5);
+pointer-events: none;
+}
+
+/* LIVE MAIN CONTENT */
+.live-main-info {
+display: flex;
+gap: 32px;
+align-items: flex-start;
+}
+.live-tiktok-block {
+flex: 1;
+}
+.live-platform-label {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.7rem;
+letter-spacing: 3px;
+color: var(–white-dim);
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+.live-tiktok-link {
+display: flex;
+align-items: center;
+gap: 14px;
+padding: 18px 24px;
+border-radius: 10px;
+text-decoration: none;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.15rem;
+font-weight: 700;
+letter-spacing: 1px;
+margin-bottom: 20px;
+cursor: none;
+transition: transform 0.25s, box-shadow 0.25s;
+position: relative;
+overflow: hidden;
+}
+.live-tiktok-link.offline-link {
+background: rgba(40,0,60,0.6);
+border: 1px solid rgba(139,0,255,0.25);
+color: rgba(240,232,255,0.4);
+pointer-events: none;
+}
+.live-tiktok-link.online-link {
+background: rgba(0,200,180,0.12);
+border: 1px solid rgba(0,220,200,0.45);
+color: #44ffee;
+pointer-events: all;
+box-shadow: 0 0 24px rgba(0,220,200,0.12);
+}
+.live-tiktok-link.online-link:hover {
+transform: translateY(-3px) scale(1.01);
+box-shadow: 0 0 40px rgba(0,220,200,0.25);
+}
+.live-tiktok-link .link-icon { font-size: 1.6rem; }
+.live-tiktok-link .link-text { flex: 1; }
+.live-tiktok-link .link-name { font-size: 1.05rem; }
+.live-tiktok-link .link-sub {
+font-size: 0.72rem;
+letter-spacing: 2px;
+opacity: 0.6;
+font-family: ‘Share Tech Mono’, monospace;
+margin-top: 2px;
+transition: color 0.4s;
+}
+.online-link .link-sub { color: var(–neon-green); opacity: 1; }
+.live-arrow { font-size: 1.2rem; transition: transform 0.2s; }
+.online-link:hover .live-arrow { transform: translateX(4px); }
+
+/* OFFLINE MSG */
+.live-offline-msg {
+font-size: 0.85rem;
+color: rgba(255,100,100,0.7);
+font-family: ‘Share Tech Mono’, monospace;
+letter-spacing: 1px;
+display: flex;
+align-items: center;
+gap: 8px;
+transition: opacity 0.4s;
+}
+.live-online-msg {
+font-size: 0.85rem;
+color: var(–neon-green);
+font-family: ‘Share Tech Mono’, monospace;
+letter-spacing: 1px;
+display: none;
+align-items: center;
+gap: 8px;
+}
+.live-status-hero.is-online .live-offline-msg { display: none; }
+.live-status-hero.is-online .live-online-msg { display: flex; }
+
+/* SCHEDULE SECTION */
+.live-schedule-section {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+margin-top: 8px;
+}
+.schedule-block {
+background: rgba(139,0,255,0.08);
+border: 1px solid rgba(139,0,255,0.2);
+border-radius: 10px;
+padding: 20px;
+transition: border-color 0.3s;
+}
+.schedule-block:hover { border-color: rgba(139,0,255,0.4); }
+.schedule-emoji { font-size: 1.5rem; margin-bottom: 8px; }
+.schedule-slot {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.72rem;
+color: var(–neon-green);
+letter-spacing: 2px;
+margin-bottom: 6px;
+}
+.schedule-detail {
+font-size: 0.9rem;
+color: var(–white-dim);
+line-height: 1.5;
+font-weight: 300;
+}
+
+/* BOTTOM ROW */
+.live-bottom-row {
+margin-top: 28px;
+padding-top: 24px;
+border-top: 1px solid rgba(139,0,255,0.15);
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 12px;
+}
+.live-viewers-wrap {
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.75rem;
+color: var(–white-dim);
+letter-spacing: 2px;
+display: flex;
+align-items: center;
+gap: 8px;
+opacity: 0;
+transition: opacity 0.5s;
+}
+.live-status-hero.is-online .live-viewers-wrap { opacity: 1; }
+.viewers-count {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.3rem;
+font-weight: 700;
+color: var(–neon-green);
+}
+
+@media (max-width: 600px) {
+.live-schedule-section { grid-template-columns: 1fr; }
+.live-main-info { flex-direction: column; }
+}
+
+/* ======= CONTACT ======= */
+#contact { position: relative; }
+.contact-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 48px;
+}
+.contact-form {
+background: var(–card-bg);
+border: 1px solid var(–card-border);
+border-radius: 12px;
+padding: 48px;
+backdrop-filter: blur(10px);
+}
+.form-group { margin-bottom: 24px; }
+.form-label {
+display: block;
+font-family: ‘Share Tech Mono’, monospace;
+font-size: 0.75rem;
+color: var(–neon-green);
+letter-spacing: 3px;
+text-transform: uppercase;
+margin-bottom: 10px;
+}
+.form-input, .form-textarea {
+width: 100%;
+background: rgba(139,0,255,0.07);
+border: 1px solid rgba(139,0,255,0.25);
+border-radius: 6px;
+padding: 14px 18px;
+color: var(–white);
+font-family: ‘Exo 2’, sans-serif;
+font-size: 0.95rem;
+font-weight: 300;
+outline: none;
+transition: border-color 0.2s, box-shadow 0.2s;
+resize: none;
+}
+.form-input:focus, .form-textarea:focus {
+border-color: var(–purple-glow);
+box-shadow: 0 0 16px rgba(139,0,255,0.2);
+}
+.form-textarea { min-height: 140px; }
+.form-input::placeholder, .form-textarea::placeholder {
+color: rgba(240,232,255,0.25);
+}
+
+.contact-side { display: flex; flex-direction: column; gap: 24px; }
+.contact-card {
+background: var(–card-bg);
+border: 1px solid var(–card-border);
+border-radius: 10px;
+padding: 28px;
+backdrop-filter: blur(10px);
+transition: border-color 0.3s;
+}
+.contact-card:hover { border-color: var(–purple-glow); }
+.contact-card-title {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.85rem;
+font-weight: 700;
+letter-spacing: 3px;
+text-transform: uppercase;
+color: var(–white-dim);
+margin-bottom: 16px;
+}
+.discord-btn {
+display: flex;
+align-items: center;
+gap: 14px;
+padding: 16px 22px;
+background: rgba(88,101,242,0.2);
+border: 1px solid rgba(88,101,242,0.4);
+border-radius: 8px;
+text-decoration: none;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.1rem;
+font-weight: 700;
+color: #aab4ff;
+letter-spacing: 1px;
+transition: transform 0.2s, box-shadow 0.2s;
+cursor: none;
+}
+.discord-btn:hover {
+transform: translateX(4px);
+box-shadow: 0 0 24px rgba(88,101,242,0.3);
+}
+.tiktok-link-btn {
+display: flex;
+align-items: center;
+gap: 14px;
+padding: 16px 22px;
+background: rgba(0,200,200,0.1);
+border: 1px solid rgba(0,200,200,0.3);
+border-radius: 8px;
+text-decoration: none;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 1.1rem;
+font-weight: 700;
+color: #44dddd;
+letter-spacing: 1px;
+transition: transform 0.2s, box-shadow 0.2s;
+cursor: none;
+}
+.tiktok-link-btn:hover {
+transform: translateX(4px);
+box-shadow: 0 0 24px rgba(0,200,200,0.25);
+}
+.contact-info-text {
+font-size: 0.9rem;
+color: var(–white-dim);
+line-height: 1.7;
+font-weight: 300;
+}
+
+/* ======= FOOTER ======= */
+footer {
+position: relative;
+z-index: 2;
+text-align: center;
+padding: 48px;
+border-top: 1px solid rgba(139,0,255,0.15);
+}
+.footer-logo {
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 2rem;
+font-weight: 700;
+letter-spacing: 4px;
+background: linear-gradient(135deg, var(–purple-glow), var(–neon-green));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+margin-bottom: 12px;
+}
+.footer-text {
+font-size: 0.8rem;
+color: rgba(240,232,255,0.3);
+letter-spacing: 2px;
+font-family: ‘Share Tech Mono’, monospace;
+}
+
+/* ======= NOTIFICATION ======= */
+.notification {
+position: fixed;
+bottom: 32px;
+right: 32px;
+background: rgba(13,0,16,0.95);
+border: 1px solid var(–neon-green);
+border-radius: 8px;
+padding: 16px 24px;
+font-family: ‘Rajdhani’, sans-serif;
+font-size: 0.95rem;
+color: var(–neon-green);
+letter-spacing: 1px;
+z-index: 1000;
+transform: translateY(80px);
+opacity: 0;
+transition: transform 0.4s, opacity 0.4s;
+box-shadow: 0 0 24px rgba(57,255,20,0.2);
+}
+.notification.show { transform: translateY(0); opacity: 1; }
+
+/* ======= RESPONSIVE ======= */
+@media (max-width: 900px) {
+nav { padding: 16px 20px; }
+.nav-links { display: none; }
+section { padding: 60px 20px; }
+#hero { padding: 90px 20px 60px; }
+.hero-content { flex-direction: column; text-align: center; gap: 32px; }
+.hero-sub { margin: 16px auto 0; }
+.hero-cta { justify-content: center; flex-wrap: wrap; }
+.about-grid { grid-template-columns: 1fr; }
+.lives-content { grid-template-columns: 1fr; }
+.contact-grid { grid-template-columns: 1fr; }
+.about-stats { grid-template-columns: 1fr 1fr; }
+.avatar-placeholder { width: 160px; height: 160px; }
+.hero-avatar-ring { display: none; }
+.hero-avatar-ring-2 { display: none; }
+/* Fix live card double button */
+.live-top-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+.live-toggle-wrap { width: 100%; }
+#liveBtn { width: 100%; }
+/* Fix contact form */
+.contact-form { padding: 24px; }
+}
+
+@media (max-width: 500px) {
+.skills-grid { grid-template-columns: 1fr 1fr; }
+.about-stats { grid-template-columns: 1fr 1fr; }
+.live-schedule-section { grid-template-columns: 1fr; }
+.hero-name { font-size: 3.5rem; }
+}
+
+/* SECTION WRAPPER */
+.section-wrap {
+position: relative;
+z-index: 2;
+}
+
+/* ======= MOBILE TOUCH ======= */
+@media (pointer: coarse) {
+body { cursor: auto; }
+.cursor, .cursor-ring { display: none !important; }
+button, a, input, textarea { cursor: pointer !important; }
+}
+
+/* ======= FIX TEXT VISIBILITY ======= */
+/* Force all text to be visible - override any dark-on-dark */
+.about-text p,
+.exp-desc,
+.schedule-detail,
+.live-desc-text,
+.contact-info-text,
+.hero-sub,
+.stat-label,
+.skill-name {
+color: rgba(240, 232, 255, 0.85) !important;
+}
+
+.section-title,
+.exp-title,
+.hero-name {
+color: #f0e8ff !important;
+-webkit-text-fill-color: unset;
+}
+
+/* Keep gradient on hero name */
+.hero-name {
+background: linear-gradient(135deg, #fff 0%, var(–purple-light) 40%, var(–neon-green) 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+/* Fix btn-primary on mobile */
+.btn-primary {
+background: linear-gradient(135deg, #8b00ff, #6600cc) !important;
+color: #fff !important;
+-webkit-text-fill-color: #fff !important;
+}
+
+/* Fix send button */
+#sendBtn {
+background: linear-gradient(135deg, #8b00ff, #6600cc) !important;
+color: #ffffff !important;
+-webkit-text-fill-color: #ffffff !important;
+border: none !important;
+clip-path: none !important;
+border-radius: 8px !important;
+}
+
+@keyframes music-ring {
+0%   { transform: scale(1);   opacity: 0.8; }
+100% { transform: scale(1.6); opacity: 0; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- CURSOR -->
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- BACKGROUND -->
+
+<div class="bg-layer">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+<div class="bg-grid"></div>
+
+<!-- NAV -->
+
+<nav>
+  <div class="nav-logo">ZIRUU</div>
+  <div class="nav-links">
+    <a href="#about" data-fr="À propos" data-en="About">À propos</a>
+    <a href="#skills" data-fr="Compétences" data-en="Skills">Compétences</a>
+    <a href="#experience" data-fr="Expériences" data-en="Experience">Expériences</a>
+    <a href="#lives" data-fr="Lives" data-en="Lives">Lives</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button id="musicBtn" title="Musique Synthwave" style="
+      background: rgba(139,0,255,0.15);
+      border: 1.5px solid rgba(139,0,255,0.4);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+      position: relative;
+    ">
+      <svg id="iconPlay" width="14" height="14" viewBox="0 0 24 24" fill="#cc88ff"><polygon points="5,3 19,12 5,21"/></svg>
+      <svg id="iconPause" width="14" height="14" viewBox="0 0 24 24" fill="#39ff14" style="display:none"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>
+      <!-- Pulse rings when playing -->
+      <span id="musicRing" style="display:none;position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(57,255,20,0.4);animation:music-ring 1.5s ease-out infinite;"></span>
+    </button>
+    <!-- Volume slider, hidden by default -->
+    <div id="volumeWrap" style="
+      display:none;
+      align-items:center;
+      gap:8px;
+      background:rgba(13,0,16,0.9);
+      border:1px solid rgba(139,0,255,0.3);
+      border-radius:20px;
+      padding:6px 14px;
+      backdrop-filter:blur(8px);
+    ">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#cc88ff"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.4" style="
+        -webkit-appearance:none;
+        width:70px; height:3px;
+        background:linear-gradient(90deg,#8b00ff 0%,#8b00ff 40%,rgba(139,0,255,0.2) 40%);
+        border-radius:3px;
+        outline:none;
+        cursor:pointer;
+      ">
+    </div>
+    <button class="lang-btn" id="langToggle">EN</button>
+  </div>
+</nav>
+
+<main>
+<!-- HERO -->
+<section id="hero" class="section-wrap">
+  <div class="hero-content">
+    <div class="hero-avatar-wrap">
+      <div class="hero-avatar-ring-2"></div>
+      <div class="hero-avatar-ring"></div>
+      <div class="avatar-placeholder" style="background:linear-gradient(135deg,#3d0066,#1a004d);display:flex;align-items:center;justify-content:center;font-size:5rem;">🎮</div>
+      <div class="hero-glow-dot"></div>
+    </div>
+    <div class="hero-text">
+      <div class="hero-eyebrow" data-fr="Créateur • Streamer • Développeur" data-en="Creator • Streamer • Developer">Créateur • Streamer • Développeur</div>
+      <h1 class="hero-name">ZIRUU</h1>
+      <p class="hero-sub">
+        <span data-fr="Créateur, <em>streamer interactif</em> et passionné de gaming" data-en="Creator, <em>interactive streamer</em> and gaming enthusiast">Créateur, <em>streamer interactif</em> et passionné de gaming</span>
+      </p>
+      <div class="hero-cta">
+        <a href="#lives" class="btn-primary" id="hero-btn-live" data-fr="▶ Me suivre" data-en="▶ Follow me">▶ Me suivre</a>
+        <a href="#contact" class="btn-ghost" id="hero-btn-contact" data-fr="Contact" data-en="Contact">Contact</a>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <div class="scroll-text">Scroll</div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ABOUT -->
+
+<div class="section-wrap">
+<section id="about">
+  <div class="reveal">
+    <div class="section-tag" data-fr="À propos de moi" data-en="About me">À propos de moi</div>
+    <h2 class="section-title"><span data-fr="Qui est" data-en="Who is">Qui est</span> ZIRUU<span>?</span></h2>
+  </div>
+  <div class="about-grid">
+    <div class="about-text reveal reveal-delay-1">
+      <p data-fr="Moi c'est <strong>ZIRU</strong>, j'ai <span class='highlight'>19 ans</span>. Je suis passionné par le gaming, la création de contenu et le développement de projets en ligne." data-en="I'm <strong>ZIRU</strong>, I'm <span class='highlight'>19 years old</span>. I'm passionate about gaming, content creation and developing online projects.">
+        Moi c'est <strong>ZIRUU</strong>, j'ai <span class="highlight">19 ans</span>. Je suis passionné par le gaming, la création de contenu et le développement de projets en ligne.
+      </p>
+      <p data-fr="Je suis actuellement <strong>débutant dans la création de sites internet</strong>, mais je suis très motivé à progresser et à apprendre." data-en="I'm currently a <strong>beginner in web development</strong>, but I'm highly motivated to progress and learn.">
+        Je suis actuellement <strong>débutant dans la création de sites internet</strong>, mais je suis très motivé à progresser et à apprendre.
+      </p>
+      <p data-fr="J'aime <span class='highlight'>créer</span>, tester, innover et proposer du contenu interactif." data-en="I love to <span class='highlight'>create</span>, test, innovate and deliver interactive content.">
+        J'aime <span class="highlight">créer</span>, tester, innover et proposer du contenu interactif.
+      </p>
+    </div>
+    <div class="about-stats reveal reveal-delay-2">
+      <div class="stat-card">
+        <div class="stat-number">19</div>
+        <div class="stat-label" data-fr="ans" data-en="years old">ans</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">∞</div>
+        <div class="stat-label" data-fr="motivation" data-en="motivation">motivation</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">5+</div>
+        <div class="stat-label" data-fr="compétences" data-en="skills">compétences</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">🔥</div>
+        <div class="stat-label" data-fr="passion gaming" data-en="gaming passion">passion gaming</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- SKILLS -->
+
+<div class="section-wrap">
+<section id="skills">
+  <div class="reveal">
+    <div class="section-tag" data-fr="Ce que je sais faire" data-en="What I can do">Ce que je sais faire</div>
+    <h2 class="section-title"><span data-fr="Mes" data-en="My">Mes</span> Compétences</h2>
+  </div>
+  <div class="skills-grid">
+    <div class="skill-card reveal reveal-delay-1">
+      <span class="skill-icon">🎨</span>
+      <div class="skill-name" data-fr="Création de bannières" data-en="Banner Creation">Création de bannières</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--w:85%"></div></div>
+    </div>
+    <div class="skill-card reveal reveal-delay-2">
+      <span class="skill-icon">🎬</span>
+      <div class="skill-name" data-fr="Montage vidéo" data-en="Video Editing">Montage vidéo</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--w:78%"></div></div>
+    </div>
+    <div class="skill-card reveal reveal-delay-3">
+      <span class="skill-icon">🎮</span>
+      <div class="skill-name" data-fr="Streaming interactif" data-en="Interactive Streaming">Streaming interactif</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--w:90%"></div></div>
+    </div>
+    <div class="skill-card reveal reveal-delay-4">
+      <span class="skill-icon">🧠</span>
+      <div class="skill-name" data-fr="Gestion communauté" data-en="Community Mgmt">Gestion communauté</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--w:88%"></div></div>
+    </div>
+    <div class="skill-card reveal reveal-delay-5">
+      <span class="skill-icon">💻</span>
+      <div class="skill-name" data-fr="Création web (débutant)" data-en="Web Dev (beginner)">Création web</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="--w:40%"></div></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- EXPERIENCE -->
+
+<div class="section-wrap">
+<section id="experience">
+  <div class="reveal">
+    <div class="section-tag" data-fr="Mon parcours" data-en="My journey">Mon parcours</div>
+    <h2 class="section-title">Expé<span>riences</span></h2>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item reveal reveal-delay-1">
+      <div class="exp-icon">🚀</div>
+      <div class="exp-title" data-fr="Co-fondateur • Serveur Destiny" data-en="Co-founder • Destiny Server">Co-fondateur • Serveur Destiny</div>
+      <div class="exp-desc" data-fr="Création et développement d'un serveur communautaire dédié à l'univers Destiny. Gestion de la structure, des membres et de l'animation globale de la communauté." data-en="Creation and development of a community server dedicated to the Destiny universe. Managing the structure, members and overall community animation.">
+        Création et développement d'un serveur communautaire dédié à l'univers Destiny. Gestion de la structure, des membres et de l'animation globale de la communauté.
+      </div>
+      <span class="exp-tag" data-fr="Fondateur" data-en="Founder">Fondateur</span>
+    </div>
+    <div class="timeline-item reveal reveal-delay-2">
+      <div class="exp-icon">⚙️</div>
+      <div class="exp-title" data-fr="Staff • Plusieurs serveurs" data-en="Staff • Multiple servers">Staff • Plusieurs serveurs</div>
+      <div class="exp-desc" data-fr="Expérience en tant que membre du staff sur plusieurs serveurs Discord. Modération, animation, support et gestion des équipes." data-en="Experience as a staff member on multiple Discord servers. Moderation, animation, support and team management.">
+        Expérience en tant que membre du staff sur plusieurs serveurs Discord. Modération, animation, support et gestion des équipes.
+      </div>
+      <span class="exp-tag" data-fr="Staff / Admin" data-en="Staff / Admin">Staff / Admin</span>
+    </div>
+    <div class="timeline-item reveal reveal-delay-3">
+      <div class="exp-icon">🎙️</div>
+      <div class="exp-title" data-fr="Animation de communauté" data-en="Community Animation">Animation de communauté</div>
+      <div class="exp-desc" data-fr="Création d'événements, organisation d'activités et animation régulière pour maintenir une communauté engagée et dynamique." data-en="Creating events, organizing activities and regular animation to maintain an engaged and dynamic community.">
+        Création d'événements, organisation d'activités et animation régulière pour maintenir une communauté engagée et dynamique.
+      </div>
+      <span class="exp-tag" data-fr="Communauté" data-en="Community">Communauté</span>
+    </div>
+  </div>
+
+  <!-- SOCIAL LINKS juste après les expériences -->
+
+  <div class="reveal reveal-delay-3" style="margin-top:40px;display:flex;gap:16px;flex-wrap:wrap;">
+    <a href="https://discord.com/users/zfaygo" target="_blank" class="discord-btn" style="flex:1;min-width:200px;">
+      <span style="font-size:1.4rem">💬</span>
+      <div>
+        <div style="font-size:0.72rem;opacity:0.6;letter-spacing:2px;margin-bottom:2px">DISCORD</div>
+        <div>zfaygo</div>
+      </div>
+    </a>
+    <a href="https://www.tiktok.com/@ziruu.gf" target="_blank" class="tiktok-link-btn" style="flex:1;min-width:200px;">
+      <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M34.1 5h-6.4v25.7c0 3-2.4 5.5-5.4 5.5s-5.4-2.5-5.4-5.5 2.4-5.4 5.4-5.4c.5 0 1 .1 1.5.2V19c-.5-.1-1-.1-1.5-.1-6.5 0-11.8 5.3-11.8 11.8S15.8 42.5 22.3 42.5s11.8-5.3 11.8-11.8V18.4c2.3 1.6 5 2.6 7.9 2.6V14.6c-4.3-.1-7.9-4.3-7.9-9.6z" fill="currentColor"/></svg>
+      <div>
+        <div style="font-size:0.72rem;opacity:0.6;letter-spacing:2px;margin-bottom:2px">TIKTOK</div>
+        <div>@ziruu.gf</div>
+      </div>
+    </a>
+  </div>
+
+</section>
+</div>
+<div class="section-wrap">
+<section id="lives">
+  <div class="reveal">
+    <div class="section-tag" data-fr="Mes streams" data-en="My streams">Mes streams</div>
+    <h2 class="section-title">En <span>Live</span></h2>
+  </div>
+
+  <!-- LIVE STATUS HERO CARD -->
+
+  <div class="live-status-hero is-offline reveal reveal-delay-1" id="liveCard">
+
+```
+<!-- TOP ROW : badge + toggle -->
+<div class="live-top-row">
+  <div class="live-status-badge is-offline" id="liveBadge">
+    <div class="status-dot"></div>
+    <span id="badgeText">HORS LIGNE</span>
+  </div>
+  <div class="live-toggle-wrap">
+    <span class="toggle-label" data-fr="Statut du live :" data-en="Live status:">Statut du live :</span>
+    <button id="liveBtn" style="
+      background: rgba(200,20,20,0.2);
+      border: 2px solid rgba(220,40,40,0.6);
+      color: #ff6060;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 14px 28px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      -webkit-appearance: none;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      min-width: 160px;
+      min-height: 48px;
+      display: inline-block;
+      position: relative;
+      z-index: 10;
+    ">⬤ HORS LIGNE</button>
+  </div>
+</div>
+
+<!-- LIEN TIKTOK LIVE -->
+<div class="live-main-info">
+  <div class="live-tiktok-block">
+    <div class="live-platform-label" data-fr="Plateforme principale" data-en="Main platform">Plateforme principale</div>
+    <a href="https://www.tiktok.com/@ziruu.gf" target="_blank" class="live-tiktok-link offline-link" id="tiktokLiveBtn">
+      <span class="link-icon">
+        <svg width="28" height="28" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M34.1 5h-6.4v25.7c0 3-2.4 5.5-5.4 5.5s-5.4-2.5-5.4-5.5 2.4-5.4 5.4-5.4c.5 0 1 .1 1.5.2V19c-.5-.1-1-.1-1.5-.1-6.5 0-11.8 5.3-11.8 11.8S15.8 42.5 22.3 42.5s11.8-5.3 11.8-11.8V18.4c2.3 1.6 5 2.6 7.9 2.6V14.6c-4.3-.1-7.9-4.3-7.9-9.6z" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="link-text">
+        <div class="link-name">@ziruu.gf — TikTok Live</div>
+        <div class="link-sub" id="linkSubText">EN ATTENTE DE LIVE…</div>
+      </div>
+      <span class="live-arrow">→</span>
+    </a>
+    <div class="live-offline-msg">⚠ &nbsp;Le live n'a pas encore commencé</div>
+    <div class="live-online-msg">✦ &nbsp;Live en cours — clique pour rejoindre !</div>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="live-schedule-section">
+  <div class="schedule-block">
+    <div class="schedule-emoji">🌅</div>
+    <div class="schedule-slot">APRÈS-MIDI</div>
+    <div class="schedule-detail" data-fr="Lives interactifs, gaming, challenges avec la commu" data-en="Interactive streams, gaming, challenges with the community">Lives interactifs, gaming, challenges avec la commu</div>
+  </div>
+  <div class="schedule-block">
+    <div class="schedule-emoji">🌙</div>
+    <div class="schedule-slot">SOIR</div>
+    <div class="schedule-detail" data-fr="Sessions RP immersives et contenus soirée" data-en="Immersive RP sessions and evening content">Sessions RP immersives et contenus soirée</div>
+  </div>
+</div>
+
+<!-- BOTTOM -->
+<div class="live-bottom-row">
+  <div class="live-viewers-wrap">
+    <span>👁</span>
+    <span class="viewers-count" id="viewersCount">—</span>
+    <span data-fr="viewers en direct" data-en="live viewers">viewers en direct</span>
+  </div>
+  <p style="font-size:0.8rem;color:var(--white-dim);font-family:'Share Tech Mono',monospace;letter-spacing:1px;" data-fr="Mon objectif : du contenu dynamique et proche de ma commu." data-en="My goal: dynamic content, close to my community.">
+    Mon objectif : du contenu dynamique et proche de ma commu.
+  </p>
+</div>
+```
+
+  </div>
+</section>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- CONTACT -->
+
+<div class="section-wrap">
+<section id="contact">
+  <div class="reveal">
+    <div class="section-tag" data-fr="Parlons-nous" data-en="Let's talk">Parlons-nous</div>
+    <h2 class="section-title">Me <span>Contacter</span></h2>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-form reveal reveal-delay-1">
+      <div class="form-group">
+        <label class="form-label" data-fr="Ton nom" data-en="Your name">Ton nom</label>
+        <input type="text" id="contactName" class="form-input" placeholder="Ex: ShadowHunter" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-fr="Ton email" data-en="Your email">Ton email</label>
+        <input type="email" id="contactEmail" class="form-input" placeholder="ton@email.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-fr="Ton message" data-en="Your message">Ton message</label>
+        <textarea id="contactMsg" class="form-textarea" placeholder="Dis-moi tout..."></textarea>
+      </div>
+      <button class="btn-primary" id="sendBtn" style="width:100%;justify-content:center;" data-fr="⚡ Envoyer" data-en="⚡ Send">⚡ Envoyer</button>
+    </div>
+    <div class="contact-side reveal reveal-delay-2">
+      <div class="contact-card">
+        <div class="contact-card-title">EMAIL</div>
+        <div style="padding:14px 18px;background:rgba(139,0,255,0.08);border:1px solid rgba(139,0,255,0.2);border-radius:8px;">
+          <div style="font-size:0.95rem;color:var(--white);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2b5142595e5e054c4d6b4c464a424705484446">[email&#160;protected]</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- FOOTER -->
+
+<footer>
+  <div class="footer-logo">ZIRUU</div>
+  <div class="footer-text" data-fr="© 2025 ZIRUU — Créateur & Streamer Interactif" data-en="© 2025 ZIRUU — Creator & Interactive Streamer">© 2025 ZIRUU — Créateur & Streamer Interactif</div>
+</footer>
+</main>
+
+<!-- PASSWORD MODAL -->
+
+<div id="pwdModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:rgba(0,0,0,0.85);
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(6px);
+">
+  <div style="
+    background:#150020;
+    border:1px solid rgba(139,0,255,0.5);
+    border-radius:16px;
+    padding:36px 32px;
+    width:90%;
+    max-width:360px;
+    box-shadow:0 0 60px rgba(139,0,255,0.3);
+    text-align:center;
+  ">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#f0e8ff;letter-spacing:2px;margin-bottom:8px;">🔒 ADMIN</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:rgba(240,232,255,0.5);letter-spacing:2px;margin-bottom:24px;">MOT DE PASSE</div>
+    <input id="pwdInput" type="password" placeholder="••••••••" style="
+      width:100%;
+      background:rgba(139,0,255,0.1);
+      border:1px solid rgba(139,0,255,0.4);
+      border-radius:8px;
+      padding:14px 18px;
+      color:#f0e8ff;
+      font-family:'Exo 2',sans-serif;
+      font-size:1rem;
+      outline:none;
+      text-align:center;
+      letter-spacing:4px;
+      margin-bottom:8px;
+    ">
+    <div id="pwdError" style="color:#ff6060;font-family:'Share Tech Mono',monospace;font-size:0.75rem;letter-spacing:1px;height:20px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:12px;">
+      <button id="pwdCancelBtn" style="
+        flex:1;background:transparent;border:1px solid rgba(240,232,255,0.2);
+        color:rgba(240,232,255,0.5);font-family:'Rajdhani',sans-serif;
+        font-size:0.9rem;font-weight:700;letter-spacing:2px;
+        padding:12px;border-radius:8px;cursor:pointer;
+      ">ANNULER</button>
+      <button id="pwdConfirmBtn" style="
+        flex:1;background:linear-gradient(135deg,#8b00ff,#6600cc);
+        border:none;color:#fff;font-family:'Rajdhani',sans-serif;
+        font-size:0.9rem;font-weight:700;letter-spacing:2px;
+        padding:12px;border-radius:8px;cursor:pointer;
+        box-shadow:0 0 20px rgba(139,0,255,0.4);
+      ">VALIDER</button>
+    </div>
+  </div>
+</div>
+<div class="notification" id="notification">✅ Message envoyé !</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+
+// –– CURSOR ––
+const cursor = document.getElementById(‘cursor’);
+const ring = document.getElementById(‘cursorRing’);
+let mx = 0, my = 0, rx = 0, ry = 0;
+let cursorScale = 1;
+
+document.addEventListener(‘mousemove’, e => {
+mx = e.clientX; my = e.clientY;
+cursor.style.transform = `translate(${mx - 6}px, ${my - 6}px) scale(${cursorScale})`;
+});
+
+function animRing() {
+rx += (mx - rx) * 0.12;
+ry += (my - ry) * 0.12;
+ring.style.transform = `translate(${rx - 18}px, ${ry - 18}px)`;
+requestAnimationFrame(animRing);
+}
+animRing();
+
+document.querySelectorAll(‘a,button,.skill-card,.timeline-item,.stat-card’).forEach(el => {
+el.addEventListener(‘mouseenter’, () => {
+cursorScale = 1.8;
+cursor.style.transform = `translate(${mx - 6}px, ${my - 6}px) scale(1.8)`;
+ring.style.width = ‘56px’; ring.style.height = ‘56px’;
+ring.style.borderColor = ‘var(–neon-green)’;
+});
+el.addEventListener(‘mouseleave’, () => {
+cursorScale = 1;
+cursor.style.transform = `translate(${mx - 6}px, ${my - 6}px) scale(1)`;
+ring.style.width = ‘36px’; ring.style.height = ‘36px’;
+ring.style.borderColor = ‘var(–purple-glow)’;
+});
+});
+
+// –– REVEAL ON SCROLL ––
+const reveals = document.querySelectorAll(’.reveal’);
+const observer = new IntersectionObserver((entries) => {
+entries.forEach(e => {
+if (e.isIntersecting) {
+e.target.classList.add(‘visible’);
+// Animate skill bars
+e.target.querySelectorAll(’.skill-bar’).forEach(bar => {
+bar.style.width = bar.style.getPropertyValue(’–w’) || ‘80%’;
+});
+}
+});
+}, { threshold: 0.15 });
+reveals.forEach(el => observer.observe(el));
+
+// Also handle skill card visibility for bar animation
+const skillObserver = new IntersectionObserver((entries) => {
+entries.forEach(e => {
+if (e.isIntersecting) e.target.classList.add(‘visible’);
+});
+}, { threshold: 0.2 });
+document.querySelectorAll(’.skill-card’).forEach(el => skillObserver.observe(el));
+
+// –– SKILL BARS ––
+// Use CSS custom property for width
+document.querySelectorAll(’.skill-bar’).forEach(bar => {
+const w = bar.style.cssText.match(/–w:([\d%]+)/)?.[1] || ‘80%’;
+bar.style.setProperty(’–target-w’, w);
+});
+
+// Override with real width on visible
+const skillCardObs = new IntersectionObserver((entries) => {
+entries.forEach(e => {
+if (e.isIntersecting) {
+const bar = e.target.querySelector(’.skill-bar’);
+if (bar) {
+const w = bar.getAttribute(‘style’).match(/–w:([\d.]+%)/)?.[1] || ‘80%’;
+setTimeout(() => bar.style.width = w, 100);
+}
+}
+});
+}, { threshold: 0.3 });
+document.querySelectorAll(’.skill-card’).forEach(el => skillCardObs.observe(el));
+
+// –– LIVE TOGGLE ––
+let isLive = false;
+const LIVE_PASSWORD = ‘ziruu2025’;
+
+function askLivePassword() {
+const modal = document.getElementById(‘pwdModal’);
+modal.style.display = ‘flex’;
+document.getElementById(‘pwdInput’).value = ‘’;
+document.getElementById(‘pwdError’).textContent = ‘’;
+setTimeout(() => document.getElementById(‘pwdInput’).focus(), 300);
+}
+
+function closePwdModal() {
+document.getElementById(‘pwdModal’).style.display = ‘none’;
+}
+
+function checkPassword() {
+const val = document.getElementById(‘pwdInput’).value;
+if (val === LIVE_PASSWORD) {
+closePwdModal();
+toggleLive();
+} else {
+document.getElementById(‘pwdError’).textContent = ‘❌ Mot de passe incorrect’;
+document.getElementById(‘pwdInput’).value = ‘’;
+}
+}
+
+// Bind all buttons safely
+(function bindButtons() {
+const liveBtnEl = document.getElementById(‘liveBtn’);
+if (liveBtnEl) {
+liveBtnEl.addEventListener(‘click’, askLivePassword);
+liveBtnEl.addEventListener(‘touchend’, function(e) { e.preventDefault(); askLivePassword(); });
+}
+const cancelBtn = document.getElementById(‘pwdCancelBtn’);
+if (cancelBtn) {
+cancelBtn.addEventListener(‘click’, closePwdModal);
+cancelBtn.addEventListener(‘touchend’, function(e) { e.preventDefault(); closePwdModal(); });
+}
+const confirmBtn = document.getElementById(‘pwdConfirmBtn’);
+if (confirmBtn) {
+confirmBtn.addEventListener(‘click’, checkPassword);
+confirmBtn.addEventListener(‘touchend’, function(e) { e.preventDefault(); checkPassword(); });
+}
+const musicBtnEl = document.getElementById(‘musicBtn’);
+if (musicBtnEl) {
+musicBtnEl.removeAttribute(‘onclick’);
+musicBtnEl.addEventListener(‘click’, toggleMusic);
+musicBtnEl.addEventListener(‘touchend’, function(e) { e.preventDefault(); toggleMusic(); });
+}
+})();
+
+document.addEventListener(‘keydown’, e => {
+if (e.key === ‘Enter’ && document.getElementById(‘pwdModal’).style.display === ‘flex’) checkPassword();
+if (e.key === ‘Escape’) closePwdModal();
+});
+function toggleLive() {
+isLive = !isLive;
+const liveCard = document.getElementById(‘liveCard’);
+const liveBadge = document.getElementById(‘liveBadge’);
+const badgeText = document.getElementById(‘badgeText’);
+const tiktokBtn = document.getElementById(‘tiktokLiveBtn’);
+const linkSubText = document.getElementById(‘linkSubText’);
+const viewersCount = document.getElementById(‘viewersCount’);
+const liveBtn = document.getElementById(‘liveBtn’);
+
+liveCard.classList.toggle(‘is-offline’, !isLive);
+liveCard.classList.toggle(‘is-online’, isLive);
+liveBadge.classList.toggle(‘is-offline’, !isLive);
+liveBadge.classList.toggle(‘is-online’, isLive);
+badgeText.textContent = isLive ? ‘🔴 EN LIVE’ : ‘HORS LIGNE’;
+tiktokBtn.classList.toggle(‘offline-link’, !isLive);
+tiktokBtn.classList.toggle(‘online-link’, isLive);
+linkSubText.textContent = isLive ? ‘→ REJOINDRE LE LIVE’ : ‘EN ATTENTE DE LIVE…’;
+
+if (isLive) {
+liveBtn.style.background = ‘rgba(57,255,20,0.15)’;
+liveBtn.style.borderColor = ‘rgba(57,255,20,0.7)’;
+liveBtn.style.color = ‘#39ff14’;
+liveBtn.style.boxShadow = ‘0 0 20px rgba(57,255,20,0.25)’;
+liveBtn.textContent = ‘⬤ EN LIVE’;
+let v = 0;
+const target = Math.floor(Math.random() * 80) + 20;
+const interval = setInterval(() => {
+v += Math.ceil(target / 20);
+if (v >= target) { v = target; clearInterval(interval); }
+viewersCount.textContent = v;
+}, 40);
+} else {
+liveBtn.style.background = ‘rgba(200,20,20,0.2)’;
+liveBtn.style.borderColor = ‘rgba(220,40,40,0.6)’;
+liveBtn.style.color = ‘#ff6060’;
+liveBtn.style.boxShadow = ‘none’;
+liveBtn.textContent = ‘⬤ HORS LIGNE’;
+viewersCount.textContent = ‘—’;
+}
+}
+let lang = ‘fr’;
+const langBtn = document.getElementById(‘langToggle’);
+langBtn.addEventListener(‘click’, () => {
+lang = lang === ‘fr’ ? ‘en’ : ‘fr’;
+langBtn.textContent = lang === ‘fr’ ? ‘EN’ : ‘FR’;
+document.querySelectorAll(’[data-fr]’).forEach(el => {
+const val = el.getAttribute(`data-${lang}`);
+if (val) el.innerHTML = val;
+});
+});
+
+// –– CONTACT FORM ––
+document.getElementById(‘sendBtn’).addEventListener(‘click’, () => {
+const name = document.getElementById(‘contactName’).value.trim();
+const email = document.getElementById(‘contactEmail’).value.trim();
+const msg = document.getElementById(‘contactMsg’).value.trim();
+if (!name || !msg) {
+const notif = document.getElementById(‘notification’);
+notif.textContent = ‘⚠ Remplis au moins ton nom et ton message !’;
+notif.style.borderColor = ‘#ff6060’;
+notif.style.color = ‘#ff6060’;
+notif.classList.add(‘show’);
+setTimeout(() => { notif.classList.remove(‘show’); notif.style.borderColor=’’; notif.style.color=’’; }, 3000);
+return;
+}
+const subject = encodeURIComponent(`Message de ${name} via le site ZIRUU`);
+const body = encodeURIComponent(`Nom : ${name}\nEmail : ${email}\n\nMessage :\n${msg}`);
+window.location.href = `mailto:ziruu.gf@gmail.com?subject=${subject}&body=${body}`;
+const notif = document.getElementById(‘notification’);
+notif.textContent = lang === ‘fr’ ? ‘✅ Ouverture de ta messagerie…’ : ‘✅ Opening your mail app…’;
+notif.classList.add(‘show’);
+setTimeout(() => notif.classList.remove(‘show’), 3000);
+});
+
+// –– SMOOTH NAV ––
+document.querySelectorAll(‘a[href^=”#”]’).forEach(a => {
+a.addEventListener(‘click’, e => {
+const target = document.querySelector(a.getAttribute(‘href’));
+if (target) { e.preventDefault(); target.scrollIntoView({ behavior: ‘smooth’ }); }
+});
+});
+
+// –– PARALLAX BG ORBS ––
+document.addEventListener(‘mousemove’, e => {
+const x = (e.clientX / window.innerWidth - 0.5) * 20;
+const y = (e.clientY / window.innerHeight - 0.5) * 20;
+document.querySelector(’.bg-orb-1’).style.transform = `translate(${x}px, ${y}px)`;
+document.querySelector(’.bg-orb-2’).style.transform = `translate(${-x * 0.5}px, ${-y * 0.5}px)`;
+});
+</script>
+
+<!-- MUSIC PLAYER - Pure Web Audio API -->
+
+<script>
+let musicPlaying = false;
+let ctx = null;
+let masterVol = null;
+let schedulerTimer = null;
+let nextNoteTime = 0;
+let beatIndex = 0;
+
+const BPM = 88;
+const BEAT = 60 / BPM;
+
+// Synthwave Am-F-C-G progression
+const CHORDS = [
+  [220.00, 261.63, 329.63], // Am
+  [174.61, 220.00, 261.63], // F
+  [130.81, 164.81, 196.00], // C
+  [196.00, 246.94, 293.66], // G
+];
+const BASS = [110.00, 87.31, 65.41, 98.00];
+const MELODY = [440, 523.25, 659.25, 587.33, 523.25, 440, 392, 440];
+
+function initCtx() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  masterVol = ctx.createGain();
+  masterVol.gain.value = 0.5;
+
+  // Simple reverb via feedback delay
+  const delay = ctx.createDelay(0.5);
+  delay.delayTime.value = 0.3;
+  const fb = ctx.createGain();
+  fb.gain.value = 0.3;
+  const delayMix = ctx.createGain();
+  delayMix.gain.value = 0.25;
+  delay.connect(fb);
+  fb.connect(delay);
+  delay.connect(delayMix);
+  delayMix.connect(ctx.destination);
+  masterVol.connect(delay);
+  masterVol.connect(ctx.destination);
+}
+
+function playOsc(freq, type, startT, dur, vol) {
+  try {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const safeDur = Math.max(dur, 0.1);
+    g.gain.setValueAtTime(0.001, startT);
+    g.gain.linearRampToValueAtTime(vol, startT + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, startT + safeDur);
+    osc.connect(g);
+    g.connect(masterVol);
+    osc.start(startT);
+    osc.stop(startT + safeDur + 0.05);
+  } catch(e) {}
+}
+
+function scheduleBeat() {
+  const chordI = Math.floor(beatIndex / 4) % CHORDS.length;
+  const melI   = beatIndex % MELODY.length;
+  const beat   = beatIndex % 4;
+  const t      = nextNoteTime;
+
+  // Pad chord — every 4 beats
+  if (beat === 0) {
+    CHORDS[chordI].forEach(f => playOsc(f, 'sawtooth', t, BEAT * 3.8, 0.18));
+    // Bass note
+    playOsc(BASS[chordI], 'sawtooth', t, BEAT * 0.45, 0.35);
+  }
+
+  // Melody — every beat
+  playOsc(MELODY[melI], 'triangle', t, BEAT * 0.9, 0.22);
+
+  // Kick on beat 0 and 2
+  if (beat === 0 || beat === 2) {
+    const kick = ctx.createOscillator();
+    const kg = ctx.createGain();
+    kick.frequency.setValueAtTime(160, t);
+    kick.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+    kg.gain.setValueAtTime(0.8, t);
+    kg.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    kick.connect(kg); kg.connect(masterVol);
+    kick.start(t); kick.stop(t + 0.2);
+  }
+
+  // Hi-hat every beat
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const hf = ctx.createBiquadFilter();
+  hf.type = 'highpass'; hf.frequency.value = 7000;
+  const hg = ctx.createGain();
+  hg.gain.setValueAtTime(0.08, t);
+  hg.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  src.connect(hf); hf.connect(hg); hg.connect(masterVol);
+  src.start(t); src.stop(t + 0.06);
+
+  nextNoteTime += BEAT;
+  beatIndex++;
+}
+
+function scheduler() {
+  while (nextNoteTime < ctx.currentTime + 0.2) {
+    scheduleBeat();
+  }
+}
+
+function startMusic() {
+  if (!ctx) initCtx();
+  // Must resume inside user gesture
+  ctx.resume().then(() => {
+    nextNoteTime = ctx.currentTime + 0.05;
+    beatIndex = 0;
+    scheduleBeat();
+    schedulerTimer = setInterval(scheduler, 50);
+  });
+}
+
+function stopMusic() {
+  clearInterval(schedulerTimer);
+  if (ctx) ctx.suspend();
+}
+
+function toggleMusic() {
+  const btn       = document.getElementById('musicBtn');
+  const iconPlay  = document.getElementById('iconPlay');
+  const iconPause = document.getElementById('iconPause');
+  const ring      = document.getElementById('musicRing');
+  const volWrap   = document.getElementById('volumeWrap');
+
+  if (!musicPlaying) {
+    startMusic();
+    musicPlaying = true;
+    iconPlay.style.display  = 'none';
+    iconPause.style.display = 'block';
+    ring.style.display      = 'block';
+    btn.style.borderColor   = 'rgba(57,255,20,0.6)';
+    btn.style.background    = 'rgba(57,255,20,0.1)';
+    btn.style.boxShadow     = '0 0 16px rgba(57,255,20,0.2)';
+    volWrap.style.display   = 'flex';
+  } else {
+    stopMusic();
+    musicPlaying = false;
+    iconPlay.style.display  = 'block';
+    iconPause.style.display = 'none';
+    ring.style.display      = 'none';
+    btn.style.borderColor   = 'rgba(139,0,255,0.4)';
+    btn.style.background    = 'rgba(139,0,255,0.15)';
+    btn.style.boxShadow     = 'none';
+    volWrap.style.display   = 'none';
+  }
+}
+
+document.getElementById('volumeSlider').addEventListener('input', function() {
+  if
