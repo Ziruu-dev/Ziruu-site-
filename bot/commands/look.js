@@ -9,173 +9,307 @@ const {
 } = require('discord.js');
 const config = require('../config');
 const { userOps, searchOps } = require('../database/db');
-const { error: embedError, success, info, COLORS } = require('../utils/embeds');
+const { searchAll, formatRow } = require('../utils/csvSearch');
+const { logSearch } = require('../utils/logger');
+const { error: embedError, COLORS } = require('../utils/embeds');
 
 // ============================================================
-// COMMANDE +look
-// Ouvre un formulaire (modal) pour rechercher dans la BDD
+// COMMANDE +look — Recherche dans les bases de données
+// Coûte 1 coin | Remboursé si aucun résultat | Tout en ephemeral
 // ============================================================
 module.exports = {
   name: 'look',
-  description: 'Recherche une personne dans la base de données (coûte des coins)',
+  description: `Recherche dans les bases de données (${config.searchCost} coin)`,
 
   async execute(message, args, client) {
     const user = userOps.getOrCreate(message.author.id, message.author.username);
 
-    // Vérifie que l'utilisateur a assez de coins
     if (user.coins < config.searchCost) {
       return message.reply({
         embeds: [
           embedError(
             'Coins insuffisants',
-            `Tu as besoin de **${config.searchCost} coins** pour effectuer une recherche.\n` +
-              `Tu possèdes actuellement **${user.coins} coin(s)**.\n\n` +
-              `Utilise \`+buy\` pour acheter des coins ou invite des membres pour en gagner.`
+            `Il te faut **${config.searchCost} coin** pour effectuer une recherche.\n` +
+              `Tu as **${user.coins} coin(s)**.\n\n` +
+              `Utilise \`+balance\` pour en acheter ou inviter des membres.`
           ),
         ],
+        ephemeral: false,
       });
     }
 
-    // Affiche un message avec le bouton pour ouvrir le formulaire
-    const row = new ActionRowBuilder().addComponents(
+    // Supprime le message original pour rester discret
+    message.delete().catch(() => {});
+
+    // Ouvre directement le modal
+    // On doit d'abord envoyer un message éphémère puis ouvrir le modal via une interaction
+    // → Ici on utilise un bouton invisible pour déclencher le modal
+    const triggerRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(`look_open_${message.author.id}`)
-        .setLabel(`🔍 Ouvrir la recherche (${config.searchCost} coins)`)
+        .setCustomId(`look_trigger_${message.author.id}_${Date.now()}`)
+        .setLabel('🔍 Ouvrir la recherche')
         .setStyle(ButtonStyle.Primary)
     );
 
-    await message.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor(COLORS.primary)
-          .setTitle('🔍 Recherche dans la base de données')
-          .setDescription(
-            `Cette recherche coûte **${config.searchCost} coins**.\n` +
-              `Tu as actuellement **${user.coins} coin(s)**.\n\n` +
-              `Clique sur le bouton ci-dessous pour ouvrir le formulaire de recherche.`
-          )
-          .setFooter({ text: 'La recherche est débitée uniquement si elle aboutit.' }),
-      ],
-      components: [row],
+    const triggerMsg = await message.channel.send({
+      content: `<@${message.author.id}> Clique pour ouvrir le formulaire de recherche (**${config.searchCost} coin**).`,
+      components: [triggerRow],
     });
 
-    // Enregistre le handler du bouton
-    client.buttonHandlers.set(`look_open_${message.author.id}`, async (interaction) => {
-      if (interaction.user.id !== message.author.id) {
-        return interaction.reply({ content: '❌ Ce bouton ne t\'est pas destiné.', ephemeral: true });
-      }
+    // Identifiant unique pour cette session de recherche
+    const sessionId = `${message.author.id}_${Date.now()}`;
+    const buttonId = `look_trigger_${message.author.id}_${Date.now()}`;
 
-      // Ouvre le modal (formulaire)
+    // Le handler du bouton n'a qu'une seule chance (60s)
+    const collector = triggerMsg.createMessageComponentCollector({
+      filter: (i) => i.user.id === message.author.id,
+      max: 1,
+      time: 60_000,
+    });
+
+    collector.on('collect', async (interaction) => {
+      // Ouvre le modal de recherche
       const modal = new ModalBuilder()
-        .setCustomId(`look_modal_${message.author.id}`)
-        .setTitle('Recherche de personne');
+        .setCustomId(`look_modal_${sessionId}`)
+        .setTitle('🔍 Recherche dans les bases de données');
 
-      const firstNameInput = new TextInputBuilder()
-        .setCustomId('first_name')
-        .setLabel('Prénom')
+      // Champ 1 : Nom + Prénom
+      const nameInput = new TextInputBuilder()
+        .setCustomId('name')
+        .setLabel('Nom et/ou Prénom')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setPlaceholder('ex: Jean');
+        .setPlaceholder('ex: Jean Dupont  (laisse vide si pas besoin)');
 
-      const lastNameInput = new TextInputBuilder()
-        .setCustomId('last_name')
-        .setLabel('Nom de famille')
+      // Champ 2 : Téléphone / IP
+      const phoneIpInput = new TextInputBuilder()
+        .setCustomId('phone_ip')
+        .setLabel('Téléphone et/ou IP')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setPlaceholder('ex: Dupont');
+        .setPlaceholder('ex: 0601020304  ou  192.168.1.1');
 
-      const cityInput = new TextInputBuilder()
-        .setCustomId('city')
-        .setLabel('Ville')
+      // Champ 3 : Ville / Département
+      const locationInput = new TextInputBuilder()
+        .setCustomId('location')
+        .setLabel('Ville et/ou Département')
         .setStyle(TextInputStyle.Short)
         .setRequired(false)
-        .setPlaceholder('ex: Paris');
+        .setPlaceholder('ex: Paris  ou  75');
+
+      // Champ 4 : Adresse / Email
+      const addressInput = new TextInputBuilder()
+        .setCustomId('address_email')
+        .setLabel('Adresse et/ou Email')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setPlaceholder('ex: 12 rue de la Paix  ou  jean@mail.com');
+
+      // Champ 5 : ID Discord
+      const discordIdInput = new TextInputBuilder()
+        .setCustomId('discord_id')
+        .setLabel('ID Discord')
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false)
+        .setPlaceholder('ex: 123456789012345678');
 
       modal.addComponents(
-        new ActionRowBuilder().addComponents(firstNameInput),
-        new ActionRowBuilder().addComponents(lastNameInput),
-        new ActionRowBuilder().addComponents(cityInput)
+        new ActionRowBuilder().addComponents(nameInput),
+        new ActionRowBuilder().addComponents(phoneIpInput),
+        new ActionRowBuilder().addComponents(locationInput),
+        new ActionRowBuilder().addComponents(addressInput),
+        new ActionRowBuilder().addComponents(discordIdInput)
       );
 
       await interaction.showModal(modal);
 
       // Enregistre le handler du modal
-      client.modalHandlers.set(`look_modal_${message.author.id}`, async (modalInteraction) => {
-        const firstName = modalInteraction.fields.getTextInputValue('first_name').trim();
-        const lastName  = modalInteraction.fields.getTextInputValue('last_name').trim();
-        const city      = modalInteraction.fields.getTextInputValue('city').trim();
+      client.modalHandlers.set(`look_modal_${sessionId}`, async (modalInteraction) => {
+        // Supprime le message déclencheur
+        triggerMsg.delete().catch(() => {});
 
-        if (!firstName && !lastName && !city) {
+        const rawName      = modalInteraction.fields.getTextInputValue('name').trim();
+        const rawPhoneIp   = modalInteraction.fields.getTextInputValue('phone_ip').trim();
+        const rawLocation  = modalInteraction.fields.getTextInputValue('location').trim();
+        const rawAddEmail  = modalInteraction.fields.getTextInputValue('address_email').trim();
+        const discordId    = modalInteraction.fields.getTextInputValue('discord_id').trim();
+
+        // Parse les champs combinés
+        const nameParts    = rawName.split(/\s+/);
+        const firstName    = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : '';
+        const lastName     = nameParts.length > 0 ? nameParts[nameParts.length - 1] : rawName;
+
+        // Téléphone vs IP : si contient des points c'est une IP
+        const phoneIpParts = rawPhoneIp.split(/[\s,;]+/);
+        let phone = '', ip = '';
+        for (const p of phoneIpParts) {
+          if (p.includes('.') && p.split('.').length >= 4) ip = p;
+          else if (p) phone = p;
+        }
+
+        // Ville vs Département : si c'est un nombre c'est un département
+        const locationParts = rawLocation.split(/[\s,;]+/);
+        let city = '', department = '';
+        for (const p of locationParts) {
+          if (/^\d{2,3}$/.test(p)) department = p;
+          else if (p) city = p;
+        }
+
+        // Adresse vs Email
+        let address = '', email = '';
+        if (rawAddEmail.includes('@')) {
+          email = rawAddEmail;
+        } else {
+          address = rawAddEmail;
+        }
+
+        const query = { firstName, lastName, city, department, address, phone, email, discordId, ip };
+
+        // Vérifie qu'au moins un champ est rempli
+        const hasQuery = Object.values(query).some(Boolean);
+        if (!hasQuery) {
           return modalInteraction.reply({
             embeds: [embedError('Formulaire vide', 'Tu dois renseigner au moins un champ.')],
             ephemeral: true,
           });
         }
 
-        // Re-vérifie les coins au moment de la soumission
+        await modalInteraction.deferReply({ ephemeral: true });
+
+        // Re-vérifie les coins
         const freshUser = userOps.get(message.author.id);
-        if (freshUser.coins < config.searchCost) {
-          return modalInteraction.reply({
-            embeds: [embedError('Coins insuffisants', `Il te faut ${config.searchCost} coins.`)],
-            ephemeral: true,
+        if (!freshUser || freshUser.coins < config.searchCost) {
+          return modalInteraction.editReply({
+            embeds: [embedError('Coins insuffisants', `Il te faut ${config.searchCost} coin.`)],
           });
         }
 
-        await modalInteraction.deferReply({ ephemeral: true });
+        // ——————————————————————————————————————
+        // RECHERCHE : CSV + SQLite en parallèle
+        // ——————————————————————————————————————
+        const csvResults = searchAll(query);
+        const sqlResults = searchOps.searchPersonsAdvanced
+          ? (() => {
+              try { return searchOps.searchPersonsAdvanced(query); } catch { return []; }
+            })()
+          : [];
 
-        // Lance la recherche
-        const results = searchOps.searchPersonsAdvanced({ firstName, lastName, city });
+        // Fusionne les résultats (CSV en priorité, puis SQLite)
+        const allResults = [
+          ...csvResults.map((r) => ({ source: r.filename, data: r.row })),
+          ...sqlResults.map((r) => ({ source: 'base interne', data: r })),
+        ];
 
-        if (results.length === 0) {
-          // Aucun résultat → on ne débite PAS les coins
-          searchOps.log(message.author.id, { firstName, lastName, city }, 0, false);
+        // ——————————————————————————————————————
+        // AUCUN RÉSULTAT → REMBOURSEMENT
+        // ——————————————————————————————————————
+        if (allResults.length === 0) {
+          searchOps.log(message.author.id, query, 0, false);
+          logSearch(message.author.username, message.author.id, query, 0, 0);
 
           return modalInteraction.editReply({
             embeds: [
-              info(
-                'Aucun résultat',
-                `Aucune personne trouvée pour :\n` +
-                  `• Prénom : **${firstName || '-'}**\n` +
-                  `• Nom : **${lastName || '-'}**\n` +
-                  `• Ville : **${city || '-'}**\n\n` +
-                  `✅ Aucun coin débité.`
-              ),
+              new EmbedBuilder()
+                .setColor(COLORS.warning)
+                .setTitle('❌ Aucun résultat trouvé')
+                .setDescription(
+                  '> Aucune correspondance dans les bases de données.\n\n' +
+                    '✅ **Aucun coin débité** — remboursement automatique.'
+                )
+                .setTimestamp(),
             ],
           });
         }
 
-        // Résultats trouvés → on débite les coins
+        // ——————————————————————————————————————
+        // RÉSULTATS TROUVÉS → DÉBIT DU COIN
+        // ——————————————————————————————————————
         userOps.removeCoins(message.author.id, config.searchCost);
-        searchOps.log(message.author.id, { firstName, lastName, city }, config.searchCost, true);
+        searchOps.log(message.author.id, query, config.searchCost, true);
+        logSearch(message.author.username, message.author.id, query, allResults.length, config.searchCost);
 
-        // Construit l'embed de résultats
-        const embed = new EmbedBuilder()
-          .setColor(COLORS.success)
-          .setTitle(`✅ ${results.length} résultat(s) trouvé(s)`)
-          .setDescription(
-            `**${config.searchCost} coins** ont été débités.\n` +
-              `Il te reste **${freshUser.coins - config.searchCost} coin(s)**.`
-          )
-          .setTimestamp();
+        const remaining = freshUser.coins - config.searchCost;
 
-        for (const person of results) {
-          embed.addFields({
-            name: `👤 ${person.first_name} ${person.last_name}`,
-            value:
-              `📍 Ville : **${person.city || 'N/A'}**\n` +
-              `📧 Email : **${person.email || 'N/A'}**\n` +
-              `📞 Téléphone : **${person.phone || 'N/A'}**\n` +
-              `📝 Info : **${person.extra_info || 'N/A'}**`,
-            inline: false,
-          });
+        // Pagine les résultats (max 10 par page pour ne pas dépasser la limite Discord)
+        const PAGE_SIZE = 5;
+        const pages = [];
+
+        for (let i = 0; i < allResults.length; i += PAGE_SIZE) {
+          const slice = allResults.slice(i, i + PAGE_SIZE);
+          const embed = new EmbedBuilder()
+            .setColor(COLORS.success)
+            .setTitle(`✅ ${allResults.length} résultat(s) — page ${pages.length + 1}/${Math.ceil(allResults.length / PAGE_SIZE)}`)
+            .setDescription(`**${config.searchCost} coin** débité | Solde restant : **${remaining} coin(s)**`)
+            .setTimestamp();
+
+          for (const result of slice) {
+            embed.addFields({
+              name: `📁 Source : ${result.source}`,
+              value: formatRow(result.data) || '_Données vides_',
+              inline: false,
+            });
+          }
+
+          pages.push(embed);
         }
 
-        await modalInteraction.editReply({ embeds: [embed] });
+        // Envoi de la première page
+        if (pages.length === 1) {
+          return modalInteraction.editReply({ embeds: [pages[0]] });
+        }
 
-        // Nettoie les handlers
-        client.modalHandlers.delete(`look_modal_${message.author.id}`);
-        client.buttonHandlers.delete(`look_open_${message.author.id}`);
+        // Plusieurs pages → boutons de navigation
+        let currentPage = 0;
+
+        const navRow = (page) =>
+          new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId(`look_prev_${sessionId}`)
+              .setLabel('◀ Précédent')
+              .setStyle(ButtonStyle.Secondary)
+              .setDisabled(page === 0),
+            new ButtonBuilder()
+              .setCustomId(`look_next_${sessionId}`)
+              .setLabel('Suivant ▶')
+              .setStyle(ButtonStyle.Secondary)
+              .setDisabled(page >= pages.length - 1)
+          );
+
+        const replyMsg = await modalInteraction.editReply({
+          embeds: [pages[0]],
+          components: [navRow(0)],
+        });
+
+        // Handler de navigation
+        const navCollector = replyMsg.createMessageComponentCollector({
+          filter: (i) => i.user.id === message.author.id,
+          time: 120_000,
+        });
+
+        navCollector.on('collect', async (navInteraction) => {
+          if (navInteraction.customId === `look_prev_${sessionId}`) currentPage--;
+          if (navInteraction.customId === `look_next_${sessionId}`) currentPage++;
+
+          await navInteraction.update({
+            embeds: [pages[currentPage]],
+            components: [navRow(currentPage)],
+          });
+        });
+
+        navCollector.on('end', () => {
+          replyMsg.edit({ components: [] }).catch(() => {});
+        });
+
+        // Nettoie le handler modal
+        client.modalHandlers.delete(`look_modal_${sessionId}`);
       });
+    });
+
+    collector.on('end', (_, reason) => {
+      if (reason === 'time') {
+        triggerMsg.delete().catch(() => {});
+        client.modalHandlers.delete(`look_modal_${sessionId}`);
+      }
     });
   },
 };

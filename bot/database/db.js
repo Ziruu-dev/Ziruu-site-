@@ -4,19 +4,18 @@ const fs = require('fs');
 
 // Crée le dossier data si nécessaire
 const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const db = new Database(path.join(dataDir, 'bot.db'));
 
-// Active le mode WAL pour de meilleures performances
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 // ============================================================
-// CRÉATION DES TABLES
+// TABLES
 // ============================================================
 db.exec(`
-  -- Table principale des utilisateurs
+  -- Utilisateurs
   CREATE TABLE IF NOT EXISTS users (
     discord_id   TEXT PRIMARY KEY,
     username     TEXT NOT NULL,
@@ -26,7 +25,13 @@ db.exec(`
     updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
-  -- Table des invitations
+  -- Suivi du coin de bienvenue (une seule fois par utilisateur, même s'il revient)
+  CREATE TABLE IF NOT EXISTS welcome_given (
+    discord_id TEXT PRIMARY KEY,
+    given_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Invitations
   CREATE TABLE IF NOT EXISTS invites (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     inviter_id     TEXT NOT NULL,
@@ -48,16 +53,16 @@ db.exec(`
 
   -- Historique des recherches
   CREATE TABLE IF NOT EXISTS search_history (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    discord_id  TEXT NOT NULL,
-    query_data  TEXT NOT NULL,
-    coins_spent INTEGER NOT NULL,
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id   TEXT NOT NULL,
+    query_data   TEXT NOT NULL,
+    coins_spent  INTEGER NOT NULL,
     result_found INTEGER NOT NULL DEFAULT 0,
-    searched_at TEXT NOT NULL DEFAULT (datetime('now')),
+    searched_at  TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (discord_id) REFERENCES users(discord_id)
   );
 
-  -- Transactions de paiement PayPal
+  -- Transactions PayPal
   CREATE TABLE IF NOT EXISTS payments (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     discord_id      TEXT NOT NULL,
@@ -70,14 +75,18 @@ db.exec(`
     FOREIGN KEY (discord_id) REFERENCES users(discord_id)
   );
 
-  -- Base de données test (les personnes que tu cherches)
+  -- Base de données test (personnes à rechercher)
   CREATE TABLE IF NOT EXISTS persons (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name  TEXT NOT NULL,
     city       TEXT,
+    department TEXT,
+    address    TEXT,
     email      TEXT,
     phone      TEXT,
+    discord_id TEXT,
+    ip         TEXT,
     extra_info TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -92,16 +101,13 @@ db.exec(`
 `);
 
 // ============================================================
-// REQUÊTES UTILISATEURS
+// OPÉRATIONS UTILISATEURS
 // ============================================================
 const userOps = {
-  // Crée un utilisateur s'il n'existe pas, retourne toujours l'utilisateur
   getOrCreate(discordId, username) {
     let user = db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discordId);
     if (!user) {
-      db.prepare(
-        'INSERT INTO users (discord_id, username) VALUES (?, ?)'
-      ).run(discordId, username);
+      db.prepare('INSERT INTO users (discord_id, username) VALUES (?, ?)').run(discordId, username);
       user = db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discordId);
     }
     return user;
@@ -109,6 +115,10 @@ const userOps = {
 
   get(discordId) {
     return db.prepare('SELECT * FROM users WHERE discord_id = ?').get(discordId);
+  },
+
+  updateUsername(discordId, username) {
+    db.prepare('UPDATE users SET username = ?, updated_at = datetime(\'now\') WHERE discord_id = ?').run(username, discordId);
   },
 
   addCoins(discordId, amount) {
@@ -123,10 +133,7 @@ const userOps = {
 
   removeCoins(discordId, amount) {
     db.prepare(`
-      UPDATE users
-      SET coins = coins - ?,
-          updated_at = datetime('now')
-      WHERE discord_id = ?
+      UPDATE users SET coins = MAX(0, coins - ?), updated_at = datetime('now') WHERE discord_id = ?
     `).run(amount, discordId);
   },
 
@@ -136,40 +143,55 @@ const userOps = {
   },
 
   setCoins(discordId, amount) {
-    db.prepare(`
-      UPDATE users SET coins = ?, updated_at = datetime('now') WHERE discord_id = ?
-    `).run(amount, discordId);
+    db.prepare(`UPDATE users SET coins = ?, updated_at = datetime('now') WHERE discord_id = ?`).run(amount, discordId);
   },
 
   top(limit = 10) {
     return db.prepare('SELECT * FROM users ORDER BY coins DESC LIMIT ?').all(limit);
   },
+
+  getAll() {
+    return db.prepare('SELECT discord_id FROM users').all();
+  },
 };
 
 // ============================================================
-// REQUÊTES INVITATIONS
+// COIN DE BIENVENUE
+// ============================================================
+const welcomeOps = {
+  hasReceived(discordId) {
+    return !!db.prepare('SELECT discord_id FROM welcome_given WHERE discord_id = ?').get(discordId);
+  },
+
+  markGiven(discordId) {
+    db.prepare('INSERT OR IGNORE INTO welcome_given (discord_id) VALUES (?)').run(discordId);
+  },
+};
+
+// ============================================================
+// INVITATIONS
 // ============================================================
 const inviteOps = {
   record(inviterId, inviteeId, inviteCode) {
     return db.prepare(`
-      INSERT INTO invites (inviter_id, invitee_id, invite_code)
-      VALUES (?, ?, ?)
+      INSERT INTO invites (inviter_id, invitee_id, invite_code) VALUES (?, ?, ?)
     `).run(inviterId, inviteeId, inviteCode);
   },
 
+  // Vérifie si cet invité a DÉJÀ été invité par quelqu'un dans le passé
+  hasEverBeenInvited(inviteeId) {
+    const row = db.prepare('SELECT id FROM invites WHERE invitee_id = ?').get(inviteeId);
+    return !!row;
+  },
+
   credit(inviteeId) {
-    return db.prepare(`
-      UPDATE invites SET credited = 1 WHERE invitee_id = ? AND credited = 0
-    `).run(inviteeId);
+    return db.prepare(`UPDATE invites SET credited = 1 WHERE invitee_id = ? AND credited = 0`).run(inviteeId);
   },
 
   markLeft(inviteeId) {
-    return db.prepare(`
-      UPDATE invites SET left_at = datetime('now') WHERE invitee_id = ? AND left_at IS NULL
-    `).run(inviteeId);
+    return db.prepare(`UPDATE invites SET left_at = datetime('now') WHERE invitee_id = ? AND left_at IS NULL`).run(inviteeId);
   },
 
-  // Compte les invitations valides (invité toujours présent)
   countValid(inviterId) {
     return db.prepare(`
       SELECT COUNT(*) as count FROM invites
@@ -177,7 +199,6 @@ const inviteOps = {
     `).get(inviterId).count;
   },
 
-  // Invitations du jour pour anti-abus
   countTodayFor(inviterId) {
     return db.prepare(`
       SELECT COUNT(*) as count FROM invites
@@ -187,92 +208,74 @@ const inviteOps = {
 };
 
 // ============================================================
-// REQUÊTES HISTORIQUE DE JOINS
+// HISTORIQUE JOINS
 // ============================================================
 const joinOps = {
   log(discordId, action) {
     db.prepare('INSERT INTO join_history (discord_id, action) VALUES (?, ?)').run(discordId, action);
   },
 
-  // Dernière fois que cet ID a quitté
   lastLeft(discordId) {
     return db.prepare(`
-      SELECT at FROM join_history
-      WHERE discord_id = ? AND action = 'leave'
-      ORDER BY at DESC LIMIT 1
+      SELECT at FROM join_history WHERE discord_id = ? AND action = 'leave' ORDER BY at DESC LIMIT 1
     `).get(discordId);
   },
 
-  // Nombre de fois que cet ID a rejoint dans les dernières X heures
   recentJoinCount(discordId, hours = 48) {
     return db.prepare(`
       SELECT COUNT(*) as count FROM join_history
-      WHERE discord_id = ? AND action = 'join'
-        AND at >= datetime('now', ? || ' hours')
+      WHERE discord_id = ? AND action = 'join' AND at >= datetime('now', ? || ' hours')
     `).get(discordId, `-${hours}`).count;
   },
 };
 
 // ============================================================
-// REQUÊTES RECHERCHES
+// RECHERCHES
 // ============================================================
 const searchOps = {
   log(discordId, queryData, coinsSpent, resultFound) {
     db.prepare(`
-      INSERT INTO search_history (discord_id, query_data, coins_spent, result_found)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO search_history (discord_id, query_data, coins_spent, result_found) VALUES (?, ?, ?, ?)
     `).run(discordId, JSON.stringify(queryData), coinsSpent, resultFound ? 1 : 0);
   },
 
   history(discordId, limit = 10) {
     return db.prepare(`
-      SELECT * FROM search_history WHERE discord_id = ?
-      ORDER BY searched_at DESC LIMIT ?
+      SELECT * FROM search_history WHERE discord_id = ? ORDER BY searched_at DESC LIMIT ?
     `).all(discordId, limit);
   },
 
-  // Recherche dans la table persons
-  searchPersons(query) {
-    const like = `%${query}%`;
-    return db.prepare(`
-      SELECT * FROM persons
-      WHERE first_name LIKE ?
-         OR last_name  LIKE ?
-         OR city       LIKE ?
-         OR email      LIKE ?
-         OR phone      LIKE ?
-      LIMIT 5
-    `).all(like, like, like, like, like);
-  },
-
-  // Recherche avancée (prénom + nom + ville)
-  searchPersonsAdvanced({ firstName, lastName, city }) {
+  // Recherche avancée dans la table persons (SQLite)
+  searchPersonsAdvanced({ firstName, lastName, city, department, address, phone, email, discordId, ip }) {
     let query = 'SELECT * FROM persons WHERE 1=1';
     const params = [];
-    if (firstName) { query += ' AND first_name LIKE ?'; params.push(`%${firstName}%`); }
-    if (lastName)  { query += ' AND last_name  LIKE ?'; params.push(`%${lastName}%`); }
-    if (city)      { query += ' AND city       LIKE ?'; params.push(`%${city}%`); }
-    query += ' LIMIT 5';
+    if (firstName)  { query += ' AND first_name LIKE ?'; params.push(`%${firstName}%`); }
+    if (lastName)   { query += ' AND last_name  LIKE ?'; params.push(`%${lastName}%`); }
+    if (city)       { query += ' AND city       LIKE ?'; params.push(`%${city}%`); }
+    if (department) { query += ' AND department LIKE ?'; params.push(`%${department}%`); }
+    if (address)    { query += ' AND address    LIKE ?'; params.push(`%${address}%`); }
+    if (phone)      { query += ' AND phone      LIKE ?'; params.push(`%${phone}%`); }
+    if (email)      { query += ' AND email      LIKE ?'; params.push(`%${email}%`); }
+    if (discordId)  { query += ' AND discord_id LIKE ?'; params.push(`%${discordId}%`); }
+    if (ip)         { query += ' AND ip         LIKE ?'; params.push(`%${ip}%`); }
+    query += ' LIMIT 50';
     return db.prepare(query).all(...params);
   },
 };
 
 // ============================================================
-// REQUÊTES PAIEMENTS
+// PAIEMENTS
 // ============================================================
 const paymentOps = {
   create(discordId, paypalOrderId, amountEur, coinsGranted) {
     return db.prepare(`
-      INSERT INTO payments (discord_id, paypal_order_id, amount_eur, coins_granted)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO payments (discord_id, paypal_order_id, amount_eur, coins_granted) VALUES (?, ?, ?, ?)
     `).run(discordId, paypalOrderId, amountEur, coinsGranted);
   },
 
   complete(paypalOrderId) {
     return db.prepare(`
-      UPDATE payments
-      SET status = 'completed', completed_at = datetime('now')
-      WHERE paypal_order_id = ?
+      UPDATE payments SET status = 'completed', completed_at = datetime('now') WHERE paypal_order_id = ?
     `).run(paypalOrderId);
   },
 
@@ -281,14 +284,12 @@ const paymentOps = {
   },
 
   userHistory(discordId) {
-    return db.prepare(`
-      SELECT * FROM payments WHERE discord_id = ? ORDER BY created_at DESC LIMIT 10
-    `).all(discordId);
+    return db.prepare(`SELECT * FROM payments WHERE discord_id = ? ORDER BY created_at DESC LIMIT 10`).all(discordId);
   },
 };
 
 // ============================================================
-// REQUÊTES ANTI-ABUS
+// ANTI-ABUS
 // ============================================================
 const abuseOps = {
   flag(discordId, reason) {
@@ -296,8 +297,7 @@ const abuseOps = {
   },
 
   isFlagged(discordId) {
-    const count = db.prepare('SELECT COUNT(*) as c FROM abuse_flags WHERE discord_id = ?').get(discordId).c;
-    return count > 0;
+    return db.prepare('SELECT COUNT(*) as c FROM abuse_flags WHERE discord_id = ?').get(discordId).c > 0;
   },
 
   list() {
@@ -306,23 +306,23 @@ const abuseOps = {
 };
 
 // ============================================================
-// DONNÉES DE TEST (peuple la table persons si vide)
+// DONNÉES DE TEST
 // ============================================================
 const personCount = db.prepare('SELECT COUNT(*) as c FROM persons').get().c;
 if (personCount === 0) {
-  const insertPerson = db.prepare(`
-    INSERT INTO persons (first_name, last_name, city, email, phone, extra_info)
-    VALUES (?, ?, ?, ?, ?, ?)
+  const ins = db.prepare(`
+    INSERT INTO persons (first_name, last_name, city, department, address, email, phone, discord_id, ip, extra_info)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const testData = [
-    ['Jean', 'Dupont', 'Paris', 'jean.dupont@test.com', '0601020304', 'Test #1'],
-    ['Marie', 'Martin', 'Lyon', 'marie.martin@test.com', '0611223344', 'Test #2'],
-    ['Pierre', 'Bernard', 'Marseille', 'pierre.b@test.com', '0622334455', 'Test #3'],
-    ['Sophie', 'Leclerc', 'Bordeaux', 'sophie.l@test.com', '0633445566', 'Test #4'],
-    ['Lucas', 'Moreau', 'Lille', 'lucas.m@test.com', '0644556677', 'Test #5'],
+    ['Jean',   'Dupont',  'Paris',     '75', '12 rue de la Paix',    'jean.dupont@test.com',   '0601020304', '123456789', '192.168.1.1',  'Test #1'],
+    ['Marie',  'Martin',  'Lyon',      '69', '5 avenue Berthelot',   'marie.martin@test.com',  '0611223344', '987654321', '10.0.0.2',     'Test #2'],
+    ['Pierre', 'Bernard', 'Marseille', '13', '88 boulevard Michelet','pierre.b@test.com',      '0622334455', '111222333', '172.16.0.5',   'Test #3'],
+    ['Sophie', 'Leclerc', 'Bordeaux',  '33', '3 cours de l\'Intendance','sophie.l@test.com',  '0633445566', '444555666', '192.168.2.10', 'Test #4'],
+    ['Lucas',  'Moreau',  'Lille',     '59', '14 rue Faidherbe',     'lucas.m@test.com',       '0644556677', '777888999', '10.1.1.99',    'Test #5'],
   ];
-  for (const row of testData) insertPerson.run(...row);
+  for (const row of testData) ins.run(...row);
   console.log('[DB] Données de test insérées dans la table persons.');
 }
 
-module.exports = { db, userOps, inviteOps, joinOps, searchOps, paymentOps, abuseOps };
+module.exports = { db, userOps, welcomeOps, inviteOps, joinOps, searchOps, paymentOps, abuseOps };
