@@ -1,176 +1,54 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  StringSelectMenuBuilder,
-} = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../config');
-const { userOps, paymentOps } = require('../database/db');
-const { createOrder, captureOrder } = require('../utils/paypal');
-const { logPayment, logError } = require('../utils/logger');
-const { success, error: embedError, COLORS } = require('../utils/embeds');
-
-// Packs disponibles — taux : 1€ = 10 coins
-const PACKS = [
-  { id: 'pack_1',   coins: 10,  price: 1.00,  label: '10 coins — 1,00 €' },
-  { id: 'pack_5',   coins: 50,  price: 5.00,  label: '50 coins — 5,00 €' },
-  { id: 'pack_10',  coins: 100, price: 10.00, label: '100 coins — 10,00 €' },
-  { id: 'pack_50',  coins: 500, price: 50.00, label: '500 coins — 50,00 €' },
-];
+const { userOps } = require('../database/db');
+const { COLORS } = require('../utils/embeds');
 
 // ============================================================
-// COMMANDE +buy — Achète des coins via PayPal sandbox
+// COMMANDE +buy
+// Affiche les instructions de paiement manuel (PayPal.me + Crypto)
+// Un admin crédite ensuite avec : +admin creditpay @user <euros>
 // ============================================================
 module.exports = {
   name: 'buy',
-  description: 'Achète des coins via PayPal (1€ = 10 coins)',
+  description: 'Voir comment acheter des coins',
 
-  async execute(message, args, client) {
-    userOps.getOrCreate(message.author.id, message.author.username);
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId(`buy_select_${message.author.id}`)
-      .setPlaceholder('Sélectionne un pack de coins')
-      .addOptions(
-        PACKS.map((pack) => ({
-          label: pack.label,
-          value: pack.id,
-          description: `${pack.coins} coins pour ${pack.price.toFixed(2)}€`,
-          emoji: '🪙',
-        }))
-      );
-
-    const row = new ActionRowBuilder().addComponents(selectMenu);
+  async execute(message) {
+    const user = userOps.getOrCreate(message.author.id, message.author.username);
 
     const embed = new EmbedBuilder()
       .setColor(COLORS.gold)
-      .setTitle('🛒 Boutique de coins')
+      .setTitle('🛒 Acheter des coins')
       .setDescription(
-        `**Taux : 1€ = ${config.coinsPerEur} coins**\n\n` +
-          PACKS.map((p) => `🪙 **${p.coins} coins** — ${p.price.toFixed(2)} €`).join('\n') +
-          '\n\n> Paiement via **PayPal Sandbox** (mode test)'
+        `**Taux :** 1 € = **${config.coinsPerEur} coins**\n` +
+        `Ton solde actuel : **${user.coins} coin(s)**\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `**💰 Via PayPal**\n` +
+        `> 1. Clique sur le bouton **"Payer via PayPal"** ci-dessous\n` +
+        `> 2. Envoie le montant souhaité\n` +
+        `> 3. ⚠️ **Mets ton pseudo Discord en note** du paiement\n` +
+        `> 4. Un admin te créditera tes coins sous 24h\n\n` +
+        `**🔗 Lien PayPal :** ${config.paypal.meUrl}\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `**🪙 Via Crypto (${config.cryptoType})**\n` +
+        `\`\`\`${config.cryptoAddress}\`\`\`` +
+        `> Envoie une capture d'écran de la transaction à un admin.\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `**📦 Exemples**\n` +
+        `> 1 € → **${config.coinsPerEur} coins**\n` +
+        `> 5 € → **${config.coinsPerEur * 5} coins**\n` +
+        `> 10 € → **${config.coinsPerEur * 10} coins**\n` +
+        `> 20 € → **${config.coinsPerEur * 20} coins**`
       )
-      .setFooter({ text: 'Sélectionne un pack dans le menu ci-dessous' });
+      .setFooter({ text: 'Après ton paiement, un admin utilisera +admin creditpay pour créditer tes coins.' })
+      .setTimestamp();
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setLabel('💳 Payer via PayPal')
+        .setStyle(ButtonStyle.Link)
+        .setURL(config.paypal.meUrl)
+    );
 
     await message.reply({ embeds: [embed], components: [row] });
-
-    client.selectHandlers.set(`buy_select_${message.author.id}`, async (interaction) => {
-      if (interaction.user.id !== message.author.id) {
-        return interaction.reply({ content: '❌ Pas pour toi.', ephemeral: true });
-      }
-
-      const packId = interaction.values[0];
-      const pack = PACKS.find((p) => p.id === packId);
-      if (!pack) return interaction.reply({ content: '❌ Pack invalide.', ephemeral: true });
-
-      await interaction.deferReply({ ephemeral: true });
-
-      try {
-        const { orderId, approvalUrl } = await createOrder(pack.price, pack.coins, message.author.id);
-        paymentOps.create(message.author.id, orderId, pack.price, pack.coins);
-
-        const confirmRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`buy_confirm_${orderId}`)
-            .setLabel('✅ J\'ai payé — Vérifier')
-            .setStyle(ButtonStyle.Success),
-          new ButtonBuilder()
-            .setLabel('🔗 Payer sur PayPal')
-            .setStyle(ButtonStyle.Link)
-            .setURL(approvalUrl)
-        );
-
-        await interaction.editReply({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(COLORS.primary)
-              .setTitle('💳 Lien de paiement généré')
-              .setDescription(
-                `**Pack :** ${pack.coins} coins — ${pack.price.toFixed(2)} €\n\n` +
-                  `1. Clique **"Payer sur PayPal"**\n` +
-                  `2. Connecte-toi avec ton compte sandbox PayPal\n` +
-                  `3. Reviens ici et clique **"J'ai payé"**`
-              )
-              .setFooter({ text: `Order ID: ${orderId}` }),
-          ],
-          components: [confirmRow],
-        });
-
-        client.buttonHandlers.set(`buy_confirm_${orderId}`, async (btnInteraction) => {
-          if (btnInteraction.user.id !== message.author.id) {
-            return btnInteraction.reply({ content: '❌ Pas pour toi.', ephemeral: true });
-          }
-
-          await btnInteraction.deferReply({ ephemeral: true });
-
-          try {
-            const captureData = await captureOrder(orderId);
-
-            if (captureData.status === 'COMPLETED') {
-              paymentOps.complete(orderId);
-              userOps.addCoins(message.author.id, pack.coins);
-              logPayment(message.author.username, message.author.id, orderId, pack.price, pack.coins);
-
-              await btnInteraction.editReply({
-                embeds: [
-                  success(
-                    'Paiement validé !',
-                    `**+${pack.coins} coins** ajoutés à ton compte ! 🎉\n` +
-                      `Utilise \`+balance\` pour voir ton solde.`
-                  ),
-                ],
-              });
-
-              if (config.paymentLogChannelId) {
-                const ch = message.guild.channels.cache.get(config.paymentLogChannelId);
-                if (ch) {
-                  ch.send({
-                    embeds: [
-                      success(
-                        'Paiement reçu',
-                        `<@${message.author.id}> — **${pack.coins} coins** pour **${pack.price.toFixed(2)} €**\n\`${orderId}\``
-                      ),
-                    ],
-                  });
-                }
-              }
-
-              client.buttonHandlers.delete(`buy_confirm_${orderId}`);
-              client.selectHandlers.delete(`buy_select_${message.author.id}`);
-            } else {
-              await btnInteraction.editReply({
-                embeds: [
-                  embedError(
-                    'Paiement non complété',
-                    `Statut : **${captureData.status}**\nAssure-toi d'avoir finalisé le paiement sur PayPal.`
-                  ),
-                ],
-              });
-            }
-          } catch (err) {
-            logError('PAYPAL_CAPTURE', err);
-            await btnInteraction.editReply({
-              embeds: [
-                embedError(
-                  'Erreur PayPal',
-                  `Impossible de vérifier le paiement.\nOrder ID : \`${orderId}\`\nContacte un admin.`
-                ),
-              ],
-            });
-          }
-        });
-      } catch (err) {
-        logError('PAYPAL_CREATE', err);
-        await interaction.editReply({
-          embeds: [
-            embedError(
-              'Erreur PayPal',
-              `Impossible de créer le lien de paiement.\nVérifie la config PayPal sandbox.\n\`${err.message}\``
-            ),
-          ],
-        });
-      }
-    });
   },
 };
