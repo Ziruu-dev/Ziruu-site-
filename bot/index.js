@@ -89,14 +89,19 @@ process.on('uncaughtException', (err) => {
 });
 
 // ——————————————————————————————————————
-// CONNEXION AU BOT
+// CONNEXION AU BOT (attend que la BDD soit prête)
 // ——————————————————————————————————————
 if (!config.token) {
   console.error('[ERREUR] DISCORD_TOKEN manquant dans le fichier .env');
   process.exit(1);
 }
 
-client.login(config.token).catch((err) => {
-  console.error('[ERREUR] Impossible de se connecter à Discord:', err.message);
+const { ready: dbReady } = require('./database/db');
+
+dbReady.then(() => {
+  console.log('[BOT] Base de données chargée, connexion à Discord...');
+  return client.login(config.token);
+}).catch((err) => {
+  console.error('[ERREUR] Impossible de démarrer:', err.message);
   process.exit(1);
 });

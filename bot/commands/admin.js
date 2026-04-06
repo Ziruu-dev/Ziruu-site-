@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { userOps, abuseOps, db } = require('../database/db');
+const { userOps, abuseOps, searchOps: dbSearchOps } = require('../database/db');
 const { success, error: embedError, info, warning, COLORS } = require('../utils/embeds');
 const config = require('../config');
 
@@ -160,9 +160,7 @@ module.exports = {
         return message.reply('Usage: `+admin addperson <prénom> <nom> [ville] [email] [téléphone]`');
       }
 
-      db.prepare(
-        'INSERT INTO persons (first_name, last_name, city, email, phone) VALUES (?, ?, ?, ?, ?)'
-      ).run(firstName, lastName, city || null, email || null, phone || null);
+      dbSearchOps.addPerson(firstName, lastName, city, email, phone);
 
       return message.reply({
         embeds: [
