@@ -39,24 +39,28 @@ module.exports = {
       .setDescription(
         `**Taux :** 1 € = **${config.coinsPerEur} coins**\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-          `**💰 Via PayPal**\n` +
-          `> Envoie le montant de ton choix via le lien ci-dessous.\n` +
-          `> ⚠️ **Mets ton ID Discord en note** pour que je t'identifie.\n\n` +
+          `**💰 Via PayPal (paiement manuel)**\n` +
+          `> 1. Clique sur le lien et envoie ton paiement\n` +
+          `> 2. ⚠️ **Mets ton ID Discord en note du paiement**\n` +
+          `> 3. Un admin créditera tes coins sous 24h\n\n` +
           `**🔗 [Clique ici pour payer via PayPal](${config.paypal.meUrl})**\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `**⚡ Via PayPal (paiement automatique)**\n` +
+          `> Tape \`+buy\` dans n'importe quel salon\n` +
+          `> → Les coins sont crédités **instantanément** après paiement\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
           `**🪙 Via Crypto (${config.cryptoType})**\n` +
           `\`\`\`${config.cryptoAddress}\`\`\`` +
-          `> Envoie une preuve de paiement à un admin après le virement.\n` +
+          `> Envoie une preuve de paiement à un admin (screenshot).\n` +
           `> Les coins seront crédités sous **24h**.\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-          `**📦 Exemples :**\n` +
+          `**📦 Exemples de montants :**\n` +
           `> 1€ → **${config.coinsPerEur} coins**\n` +
           `> 5€ → **${config.coinsPerEur * 5} coins**\n` +
           `> 10€ → **${config.coinsPerEur * 10} coins**\n` +
           `> 50€ → **${config.coinsPerEur * 50} coins**`
       )
-      .setThumbnail('https://cdn.discordapp.com/emojis/💰.png')
-      .setFooter({ text: 'Utilise +buy pour le paiement automatique via PayPal sandbox' })
+      .setFooter({ text: '+buy = automatique | PayPal.me = manuel (admin crédite avec +admin creditpay)' })
       .setTimestamp();
 
     const row = new ActionRowBuilder().addComponents(

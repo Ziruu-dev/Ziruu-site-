@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { userOps, abuseOps, searchOps: dbSearchOps } = require('../database/db');
+const { refreshIndex, indexStats } = require('../utils/csvSearch');
 const { success, error: embedError, info, warning, COLORS } = require('../utils/embeds');
 const config = require('../config');
 
@@ -154,19 +155,104 @@ module.exports = {
     // Ajoute une personne dans la BDD de test
     // ——————————————————————————————————————
     if (sub === 'addperson') {
-      const [, , firstName, lastName, city, email, phone] = args;
+      const [, , firstName, lastName, city, email, phone, department, address, ip] = args;
 
       if (!firstName || !lastName) {
-        return message.reply('Usage: `+admin addperson <prénom> <nom> [ville] [email] [téléphone]`');
+        return message.reply(
+          'Usage: `+admin addperson <prénom> <nom> [ville] [email] [téléphone] [département] [adresse] [ip]`'
+        );
       }
 
-      dbSearchOps.addPerson(firstName, lastName, city, email, phone);
+      dbSearchOps.addPerson(firstName, lastName, city, email, phone, department, address, ip);
 
       return message.reply({
         embeds: [
           success(
             'Personne ajoutée',
-            `**${firstName} ${lastName}** a été ajouté(e) à la base de données.`
+            `**${firstName} ${lastName}** ajouté(e) à la base interne.`
+          ),
+        ],
+      });
+    }
+
+    // ——————————————————————————————————————
+    // +admin reindex
+    // Force la reconstruction de l'index CSV
+    // ——————————————————————————————————————
+    if (sub === 'reindex') {
+      refreshIndex();
+      const stats = indexStats();
+      return message.reply({
+        embeds: [
+          success(
+            'Index reconstruit',
+            `**${stats.rows} lignes** indexées depuis **${stats.files} fichier(s)**.\n` +
+            `Tokens : **${stats.tokens}** | Champs : **${stats.fields}**\n` +
+            `Dossier : \`data/databases/\``
+          ),
+        ],
+      });
+    }
+
+    // ——————————————————————————————————————
+    // +admin indexstats
+    // Affiche les statistiques de l'index
+    // ——————————————————————————————————————
+    if (sub === 'indexstats') {
+      const stats = indexStats();
+      return message.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(COLORS.info)
+            .setTitle('📊 Statistiques de l\'index')
+            .addFields(
+              { name: 'Fichiers indexés', value: `**${stats.files}**`, inline: true },
+              { name: 'Lignes totales',   value: `**${stats.rows}**`,  inline: true },
+              { name: 'Tokens uniques',   value: `**${stats.tokens}**`,inline: true },
+              { name: 'Champs reconnus',  value: `**${stats.fields}**`,inline: true },
+              { name: 'Dernière indexation', value: stats.builtAt, inline: false }
+            )
+            .setTimestamp(),
+        ],
+      });
+    }
+
+    // ——————————————————————————————————————
+    // +admin creditpay @user <montant_euros>
+    // Crédite manuellement un paiement PayPal.me / crypto
+    // ——————————————————————————————————————
+    if (sub === 'creditpay') {
+      const target = message.mentions.users.first();
+      const euros = parseFloat(args[2]);
+
+      if (!target || isNaN(euros) || euros <= 0) {
+        return message.reply('Usage: `+admin creditpay @user <montant_euros>`\nExemple : `+admin creditpay @Ziruu 10`');
+      }
+
+      const coins = Math.floor(euros * config.coinsPerEur);
+      userOps.getOrCreate(target.id, target.username);
+      userOps.addCoins(target.id, coins);
+      const updated = userOps.get(target.id);
+
+      // Log dans le salon des paiements si configuré
+      if (config.paymentLogChannelId) {
+        const logChannel = message.guild.channels.cache.get(config.paymentLogChannelId);
+        logChannel?.send({
+          embeds: [
+            success(
+              'Paiement manuel crédité',
+              `<@${target.id}> — **${euros}€** → **+${coins} coins** (crédité par <@${message.author.id}>)`
+            ),
+          ],
+        });
+      }
+
+      return message.reply({
+        embeds: [
+          success(
+            'Paiement crédité',
+            `**${euros}€** = **+${coins} coins** ajoutés à <@${target.id}>.\n` +
+            `Nouveau solde : **${updated.coins} coins**.`
           ),
         ],
       });
@@ -181,12 +267,18 @@ module.exports = {
           .setColor(COLORS.info)
           .setTitle('🛠️ Commandes Admin')
           .setDescription(
+            '**💰 Coins**\n' +
             '`+admin addcoins @user <n>` — Ajouter des coins\n' +
             '`+admin removecoins @user <n>` — Retirer des coins\n' +
             '`+admin setcoins @user <n>` — Définir les coins\n' +
+            '`+admin creditpay @user <euros>` — Créditer un paiement PayPal.me/crypto\n\n' +
+            '**🛡️ Anti-abus**\n' +
             '`+admin ban @user <raison>` — Marquer comme abuseur\n' +
-            '`+admin flagged` — Voir les utilisateurs flagués\n' +
-            '`+admin addperson <prénom> <nom> [ville] [email] [tel]` — Ajouter une personne en BDD'
+            '`+admin flagged` — Voir les utilisateurs flagués\n\n' +
+            '**🗄️ Base de données**\n' +
+            '`+admin addperson <prénom> <nom> [ville] [email] [tel] [dept] [adresse] [ip]`\n' +
+            '`+admin reindex` — Reconstruire l\'index de recherche\n' +
+            '`+admin indexstats` — Statistiques de l\'index'
           ),
       ],
     });

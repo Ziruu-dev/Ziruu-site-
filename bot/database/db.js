@@ -106,7 +106,6 @@ const ready = (async () => {
       address    TEXT,
       email      TEXT,
       phone      TEXT,
-      discord_id TEXT,
       ip         TEXT,
       extra_info TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -123,15 +122,15 @@ const ready = (async () => {
   const count = get('SELECT COUNT(*) as c FROM persons');
   if (count && count.c === 0) {
     const testData = [
-      ['Jean',   'Dupont',  'Paris',     '75', '12 rue de la Paix',       'jean.dupont@test.com',  '0601020304', '123456789', '192.168.1.1',  'Test #1'],
-      ['Marie',  'Martin',  'Lyon',      '69', '5 avenue Berthelot',      'marie.martin@test.com', '0611223344', '987654321', '10.0.0.2',     'Test #2'],
-      ['Pierre', 'Bernard', 'Marseille', '13', '88 boulevard Michelet',   'pierre.b@test.com',     '0622334455', '111222333', '172.16.0.5',   'Test #3'],
-      ['Sophie', 'Leclerc', 'Bordeaux',  '33', '3 cours de l\'Intendance','sophie.l@test.com',     '0633445566', '444555666', '192.168.2.10', 'Test #4'],
-      ['Lucas',  'Moreau',  'Lille',     '59', '14 rue Faidherbe',        'lucas.m@test.com',      '0644556677', '777888999', '10.1.1.99',    'Test #5'],
+      ['Jean',   'Dupont',  'Paris',     '75', '12 rue de la Paix',       'jean.dupont@test.com',  '0601020304', '192.168.1.1',  'Test #1'],
+      ['Marie',  'Martin',  'Lyon',      '69', '5 avenue Berthelot',      'marie.martin@test.com', '0611223344', '10.0.0.2',     'Test #2'],
+      ['Pierre', 'Bernard', 'Marseille', '13', '88 boulevard Michelet',   'pierre.b@test.com',     '0622334455', '172.16.0.5',   'Test #3'],
+      ['Sophie', 'Leclerc', 'Bordeaux',  '33', '3 cours de l\'Intendance','sophie.l@test.com',     '0633445566', '192.168.2.10', 'Test #4'],
+      ['Lucas',  'Moreau',  'Lille',     '59', '14 rue Faidherbe',        'lucas.m@test.com',      '0644556677', '10.1.1.99',    'Test #5'],
     ];
     for (const r of testData) {
       run(
-        'INSERT INTO persons (first_name,last_name,city,department,address,email,phone,discord_id,ip,extra_info) VALUES (?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO persons (first_name,last_name,city,department,address,email,phone,ip,extra_info) VALUES (?,?,?,?,?,?,?,?,?)',
         r
       );
     }
@@ -271,7 +270,7 @@ const searchOps = {
     return all('SELECT * FROM search_history WHERE discord_id = ? ORDER BY searched_at DESC LIMIT ?', [discordId, limit]);
   },
 
-  searchPersonsAdvanced({ firstName, lastName, city, department, address, phone, email, discordId, ip }) {
+  searchPersonsAdvanced({ firstName, lastName, city, department, address, phone, email, ip }) {
     let sql = 'SELECT * FROM persons WHERE 1=1';
     const params = [];
     if (firstName)  { sql += ' AND first_name LIKE ?'; params.push(`%${firstName}%`); }
@@ -281,16 +280,15 @@ const searchOps = {
     if (address)    { sql += ' AND address    LIKE ?'; params.push(`%${address}%`); }
     if (phone)      { sql += ' AND phone      LIKE ?'; params.push(`%${phone}%`); }
     if (email)      { sql += ' AND email      LIKE ?'; params.push(`%${email}%`); }
-    if (discordId)  { sql += ' AND discord_id LIKE ?'; params.push(`%${discordId}%`); }
     if (ip)         { sql += ' AND ip         LIKE ?'; params.push(`%${ip}%`); }
     sql += ' LIMIT 50';
     return all(sql, params);
   },
 
-  addPerson(firstName, lastName, city, email, phone, department, address) {
+  addPerson(firstName, lastName, city, email, phone, department, address, ip) {
     run(
-      'INSERT INTO persons (first_name, last_name, city, email, phone, department, address) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [firstName, lastName, city || null, email || null, phone || null, department || null, address || null]
+      'INSERT INTO persons (first_name, last_name, city, email, phone, department, address, ip) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [firstName, lastName, city || null, email || null, phone || null, department || null, address || null, ip || null]
     );
   },
 };
