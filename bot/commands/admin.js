@@ -223,13 +223,18 @@ module.exports = {
     // ——————————————————————————————————————
     if (sub === 'creditpay') {
       const target = message.mentions.users.first();
-      const euros = parseFloat(args[2]);
+      // Accepte virgule (0,5) ou point (0.5) comme séparateur décimal
+      const rawAmount = (args[2] || '').replace(',', '.');
+      const euros = parseFloat(rawAmount);
 
       if (!target || isNaN(euros) || euros <= 0) {
-        return message.reply('Usage: `+admin creditpay @user <montant_euros>`\nExemple : `+admin creditpay @Ziruu 10`');
+        return message.reply(
+          'Usage: `+admin creditpay @user <montant_euros>`\n' +
+          'Exemples : `+admin creditpay @Ziruu 10` · `+admin creditpay @Ziruu 0,5` · `+admin creditpay @Ziruu 0.22`'
+        );
       }
 
-      const coins = Math.floor(euros * config.coinsPerEur);
+      const coins = Math.round(euros * config.coinsPerEur);
       userOps.getOrCreate(target.id, target.username);
       userOps.addCoins(target.id, coins);
       const updated = userOps.get(target.id);
@@ -251,8 +256,8 @@ module.exports = {
         embeds: [
           success(
             'Paiement crédité',
-            `**${euros}€** = **+${coins} coins** ajoutés à <@${target.id}>.\n` +
-            `Nouveau solde : **${updated.coins} coins**.`
+            `**${euros}€** × ${config.coinsPerEur} = **+${coins} coin(s)** ajoutés à <@${target.id}>.\n` +
+            `Nouveau solde : **${updated.coins} coin(s)**.`
           ),
         ],
       });
