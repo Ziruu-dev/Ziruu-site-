@@ -96,9 +96,13 @@ if (!config.token) {
   process.exit(1);
 }
 
-const { ready: dbReady } = require('./database/db');
+const { ready: dbReady, getSqlConstructor } = require('./database/db');
+const { setSqlConstructor } = require('./utils/csvSearch');
 
 dbReady.then(() => {
+  // Partage le constructeur sql.js avec le moteur de recherche CSV
+  // pour qu'il puisse lire les fichiers .db dans data/databases/
+  setSqlConstructor(getSqlConstructor());
   console.log('[BOT] Base de données chargée, connexion à Discord...');
   return client.login(config.token);
 }).catch((err) => {

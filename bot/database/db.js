@@ -40,9 +40,14 @@ function all(sql, params = []) {
   return results;
 }
 
+// Constructeur SQL exporté pour csvSearch.js
+let _sqlConstructor = null;
+const getSqlConstructor = () => _sqlConstructor;
+
 // Promesse d'initialisation — attendue par index.js avant le login
 const ready = (async () => {
   const SQL = await initSqlJs();
+  _sqlConstructor = SQL; // on le partage avec csvSearch.js
 
   if (fs.existsSync(DB_PATH)) {
     const buffer = fs.readFileSync(DB_PATH);
@@ -335,4 +340,4 @@ const abuseOps = {
   },
 };
 
-module.exports = { ready, userOps, welcomeOps, inviteOps, joinOps, searchOps, paymentOps, abuseOps };
+module.exports = { ready, getSqlConstructor, userOps, welcomeOps, inviteOps, joinOps, searchOps, paymentOps, abuseOps };

@@ -110,20 +110,101 @@ function parseJson(content) {
 }
 
 // ============================================================
+// INSTANCE sql.js (injectée depuis index.js après init)
+// ============================================================
+let _SQL = null;
+
+/**
+ * Appelé par index.js une fois que sql.js est initialisé
+ * @param {object} SQL — le constructeur sql.js
+ */
+function setSqlConstructor(SQL) {
+  _SQL = SQL;
+  console.log('[INDEX] sql.js disponible pour la lecture des fichiers .db externes.');
+}
+
+// ============================================================
+// PARSEUR SQLite (.db)
+// Lit toutes les tables d'un fichier .db externe
+// ============================================================
+function parseSqliteDb(filepath) {
+  if (!_SQL) {
+    console.warn(`[INDEX] sql.js pas encore prêt — ${path.basename(filepath)} sera chargé au prochain reindex.`);
+    return [];
+  }
+
+  try {
+    const buffer = fs.readFileSync(filepath);
+    const db = new _SQL.Database(buffer);
+
+    // Liste toutes les tables utilisateur
+    const tablesResult = db.exec(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    );
+    if (!tablesResult.length) { db.close(); return []; }
+
+    const tables = tablesResult[0].values.map(r => r[0]);
+    const rows   = [];
+
+    for (const table of tables) {
+      try {
+        const result = db.exec(`SELECT * FROM "${table}" LIMIT 10000`);
+        if (!result.length) continue;
+
+        const { columns, values } = result[0];
+        for (const row of values) {
+          const obj = {};
+          columns.forEach((col, i) => {
+            if (row[i] !== null && row[i] !== undefined && row[i] !== '') {
+              obj[col] = String(row[i]);
+            }
+          });
+          if (Object.keys(obj).length > 0) rows.push(obj);
+        }
+      } catch { /* table illisible */ }
+    }
+
+    db.close();
+    return rows;
+  } catch (err) {
+    console.error(`[INDEX] Erreur lecture ${path.basename(filepath)}: ${err.message}`);
+    return [];
+  }
+}
+
+// ============================================================
 // CHARGEMENT DES FICHIERS
+// Supporte : .csv, .tsv, .txt, .json, .db (SQLite)
 // ============================================================
 function loadAllFiles() {
-  const exts = ['.csv', '.tsv', '.json', '.txt'];
+  const exts = ['.csv', '.tsv', '.json', '.txt', '.db'];
   const files = fs.readdirSync(DB_FOLDER).filter(f => exts.includes(path.extname(f).toLowerCase()));
   const result = [];
+
   for (const file of files) {
     const fp   = path.join(DB_FOLDER, file);
     const stat = fs.statSync(fp);
     const ext  = path.extname(file).toLowerCase();
-    const content = fs.readFileSync(fp, 'utf8');
-    const rows = ext === '.json' ? parseJson(content) : parseCsv(content);
-    if (rows.length > 0) result.push({ filename: file, rows, mtime: stat.mtimeMs });
+
+    let rows = [];
+
+    try {
+      if (ext === '.db') {
+        rows = parseSqliteDb(fp);
+      } else {
+        const content = fs.readFileSync(fp, 'utf8');
+        rows = ext === '.json' ? parseJson(content) : parseCsv(content);
+      }
+    } catch (err) {
+      console.error(`[INDEX] Impossible de lire ${file}: ${err.message}`);
+    }
+
+    if (rows.length > 0) {
+      result.push({ filename: file, rows, mtime: stat.mtimeMs });
+      console.log(`[INDEX] ${file} → ${rows.length} ligne(s) chargée(s)`);
+    }
   }
+
   return result;
 }
 
@@ -332,9 +413,10 @@ function formatRow(row) {
 // EXPORTS
 // ============================================================
 module.exports = {
-  searchAll: (query) => globalIndex.search(query),
-  refreshIndex: ()   => globalIndex.refresh(),
-  indexStats: ()     => globalIndex.stats(),
+  searchAll:        (query) => globalIndex.search(query),
+  refreshIndex:     ()      => globalIndex.refresh(),
+  indexStats:       ()      => globalIndex.stats(),
+  setSqlConstructor,  // appelé par index.js après init sql.js
   formatRow,
   DB_FOLDER,
 };
